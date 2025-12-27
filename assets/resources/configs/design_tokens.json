@@ -1,0 +1,29 @@
+{
+  "name": "Whisperwood UI Kit",
+  "palette": {
+    "bg_sky": "#DDEFF7",
+    "bg_mist": "#EEF6F0",
+    "leaf": "#76B68A",
+    "acorn": "#D8A15A",
+    "star": "#F3D46A",
+    "fish": "#7DB3D5",
+    "bone": "#F0E6D6",
+    "moss": "#6FA57B",
+    "ink": "#3B3A36",
+    "panel": "#F7F2E7",
+    "panel_stroke": "#C9BFAE",
+    "accent": "#E7A1A1"
+  },
+  "typography": {
+    "primary": "Nunito / Noto Sans (fallback)",
+    "story_size": 36,
+    "ui_size": 28,
+    "number_size": 42
+  },
+  "layout_ratios": {
+    "story_panel_height": 0.26,
+    "board_height": 0.52,
+    "bottom_controls_height": 0.12,
+    "hud_height": 0.06
+  }
+}

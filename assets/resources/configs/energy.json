@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "energy_max": 5,
+  "energy_regen_seconds": 1200,
+  "consume_per_play": 1,
+  "ad_reward_energy": 1,
+  "ad_hourly_cap": 6,
+  "ad_daily_cap": 15,
+  "newbie_protection": {
+    "enabled": true,
+    "free_levels": 10
+  },
+  "overflow_allowed": false
+}

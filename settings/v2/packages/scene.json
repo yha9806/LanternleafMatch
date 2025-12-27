@@ -1,0 +1,8 @@
+{
+  "__version__": "1.0.3",
+  "startScene": "db://assets/scenes/Menu.scene",
+  "includeScenes": [
+    "db://assets/scenes/Menu.scene",
+    "db://assets/scenes/Game.scene"
+  ]
+}

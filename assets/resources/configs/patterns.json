@@ -1,0 +1,104 @@
+{
+  "board_size": 6,
+  "patterns": {
+    "none": {
+      "id": "P0",
+      "name": "Pure Collect",
+      "base_mask": [],
+      "density_range": [0, 0],
+      "level_range": [1, 8]
+    },
+    "edge_ring": {
+      "id": "P1",
+      "name": "Edge Ring",
+      "base_mask": [
+        [0,0],[0,1],[0,2],[0,3],[0,4],[0,5],
+        [1,0],[1,5],
+        [2,0],[2,5],
+        [3,0],[3,5],
+        [4,0],[4,5],
+        [5,0],[5,1],[5,2],[5,3],[5,4],[5,5]
+      ],
+      "density_range": [0.05, 0.12],
+      "level_range": [5, 15]
+    },
+    "corners": {
+      "id": "P2",
+      "name": "Corner Patches",
+      "base_mask": [
+        [0,0],[0,1],[1,0],[1,1],
+        [0,4],[0,5],[1,4],[1,5],
+        [4,0],[4,1],[5,0],[5,1],
+        [4,4],[4,5],[5,4],[5,5]
+      ],
+      "density_range": [0.08, 0.16],
+      "level_range": [10, 22]
+    },
+    "diagonal": {
+      "id": "P3",
+      "name": "Diagonal Trail",
+      "base_mask": [
+        [0,0],[1,1],[2,2],[3,3],[4,4],[5,5],
+        [0,1],[1,2],[2,3],[3,4],[4,5]
+      ],
+      "density_range": [0.10, 0.22],
+      "level_range": [14, 28]
+    },
+    "center_blob": {
+      "id": "P4",
+      "name": "Center Blob",
+      "base_mask": [
+        [2,2],[2,3],[2,4],
+        [3,2],[3,3],[3,4],
+        [4,2],[4,3],[4,4]
+      ],
+      "density_range": [0.12, 0.30],
+      "level_range": [18, 35]
+    },
+    "center_cross": {
+      "id": "P5",
+      "name": "Cross Wind",
+      "base_mask": [
+        [2,0],[2,1],[2,2],[2,3],[2,4],[2,5],
+        [3,0],[3,1],[3,2],[3,3],[3,4],[3,5],
+        [0,2],[1,2],[4,2],[5,2],
+        [0,3],[1,3],[4,3],[5,3]
+      ],
+      "density_range": [0.12, 0.26],
+      "level_range": [22, 40]
+    },
+    "stripes_h": {
+      "id": "P6",
+      "name": "Stripes Horizontal",
+      "base_mask": [
+        [1,0],[1,1],[1,2],[1,3],[1,4],[1,5],
+        [3,0],[3,1],[3,2],[3,3],[3,4],[3,5],
+        [5,0],[5,1],[5,2],[5,3],[5,4],[5,5]
+      ],
+      "density_range": [0.16, 0.30],
+      "level_range": [30, 50]
+    },
+    "stripes_v": {
+      "id": "P6v",
+      "name": "Stripes Vertical",
+      "base_mask": [
+        [0,1],[1,1],[2,1],[3,1],[4,1],[5,1],
+        [0,3],[1,3],[2,3],[3,3],[4,3],[5,3],
+        [0,5],[1,5],[2,5],[3,5],[4,5],[5,5]
+      ],
+      "density_range": [0.16, 0.30],
+      "level_range": [30, 50]
+    },
+    "scattered": {
+      "id": "P7",
+      "name": "Scattered",
+      "base_mask": "ALL_EXCEPT_CENTER",
+      "forbidden_cells": [[2,2],[2,3],[3,2],[3,3]],
+      "row_cap": 2,
+      "col_cap": 2,
+      "density_range": [0.22, 0.30],
+      "level_range": [38, 50]
+    }
+  },
+  "center_safe_zone": [[2,2],[2,3],[3,2],[3,3]]
+}

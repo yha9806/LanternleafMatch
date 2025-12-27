@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>灯笼叶子消消乐 - Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #2d5a27 0%, #1a3518 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
+    .header {
+      padding: 20px;
+      text-align: center;
+      width: 100%;
+      max-width: 600px;
+    }
+    .title {
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      margin-bottom: 10px;
+    }
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+    .hud-item {
+      text-align: center;
+    }
+    .hud-label {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    .hud-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .goal-box {
+      background: rgba(255,255,255,0.1);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    #gameCanvas {
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      touch-action: none;
+    }
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn:active {
+      transform: scale(0.95);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #ffd700, #ffb800);
+      color: #333;
+      box-shadow: 0 4px 12px rgba(255,215,0,0.4);
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+    .message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.85);
+      padding: 30px 50px;
+      border-radius: 16px;
+      text-align: center;
+      display: none;
+      z-index: 100;
+    }
+    .message h2 {
+      font-size: 32px;
+      margin-bottom: 15px;
+    }
+    .message p {
+      font-size: 18px;
+      opacity: 0.8;
+      margin-bottom: 20px;
+    }
+    .energy-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .energy-icon {
+      font-size: 20px;
+    }
+    .combo-text {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      font-weight: bold;
+      color: #ffd700;
+      text-shadow: 0 0 20px rgba(255,215,0,0.8);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .energy-timer {
+      font-size: 11px;
+      opacity: 0.7;
+      text-align: center;
+    }
+    .newbie-hint {
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      text-align: center;
+      margin-top: 8px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .energy-gate {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+    }
+    .energy-gate-content {
+      text-align: center;
+      padding: 30px;
+    }
+    .energy-gate h2 {
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+    .energy-gate p {
+      font-size: 16px;
+      opacity: 0.8;
+      margin-bottom: 10px;
+    }
+    .energy-gate .big-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    .energy-gate .btn {
+      margin: 10px;
+      min-width: 150px;
+    }
+    .btn-ad {
+      background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(156,39,176,0.4);
+    }
+    .ad-remaining {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">灯笼叶子消消乐</div>
+    <div class="hud">
+      <div class="hud-item">
+        <div class="hud-label">关卡</div>
+        <div class="hud-value" id="levelNum">1</div>
+      </div>
+      <div class="goal-box" id="goalText">收集 8 个叶子</div>
+      <div class="hud-item">
+        <div class="hud-label">步数</div>
+        <div class="hud-value" id="movesLeft">15</div>
+      </div>
+      <div class="hud-item energy-bar">
+        <span class="energy-icon">⚡</span>
+        <div>
+          <div class="hud-value" id="energy">5/5</div>
+          <div class="energy-timer" id="energyTimer">已满</div>
+        </div>
+      </div>
+    </div>
+    <div class="newbie-hint" id="newbieHint" style="display:none;">
+      🎁 新手保护期：前10关不消耗体力
+    </div>
+  </div>
+
+  <canvas id="gameCanvas" width="540" height="540"></canvas>
+
+  <div class="controls">
+    <button class="btn btn-secondary" id="hintBtn">提示</button>
+    <button class="btn btn-primary" id="restartBtn">重新开始</button>
+    <button class="btn btn-secondary" id="nextBtn">下一关</button>
+  </div>
+
+  <div class="message" id="messageBox">
+    <h2 id="msgTitle">恭喜通关!</h2>
+    <p id="msgContent">剩余 5 步</p>
+    <button class="btn btn-primary" id="msgBtn">继续</button>
+  </div>
+
+  <div class="combo-text" id="comboText">连消 x2!</div>
+
+  <!-- 体力不足弹窗 -->
+  <div class="energy-gate" id="energyGate" style="display:none;">
+    <div class="energy-gate-content">
+      <div class="big-icon">⚡</div>
+      <h2>体力不足</h2>
+      <p>当前体力: <span id="gateEnergyCurrent">0</span>/<span id="gateEnergyMax">5</span></p>
+      <p>下次恢复: <span id="gateEnergyTimer">--:--</span></p>
+      <button class="btn btn-ad" id="watchAdBtn">🎬 看广告 +1体力</button>
+      <div class="ad-remaining">今日剩余: <span id="adRemaining">6</span> 次</div>
+      <button class="btn btn-secondary" id="waitBtn">等待恢复</button>
+    </div>
+  </div>
+
+<script>
+// ============================================
+// 灯笼叶子消消乐 - Web Demo
+// ============================================
+
+// --- 类型常量 ---
+const TILE_TYPES = ['leaf', 'acorn', 'star', 'fish', 'bone'];
+const TILE_COLORS = {
+  leaf: '#4CAF50',
+  acorn: '#8B4513',
+  star: '#FFD700',
+  fish: '#2196F3',
+  bone: '#F5F5DC'
+};
+const TILE_EMOJIS = {
+  leaf: '🍃',
+  acorn: '🌰',
+  star: '⭐',
+  fish: '🐟',
+  bone: '🦴'
+};
+const SPECIAL_COLORS = {
+  whirl_h: '#FF5722',
+  whirl_v: '#FF5722',
+  lantern: '#E91E63'
+};
+
+const BOARD_SIZE = 6;
+const CELL_SIZE = 80;
+const CELL_GAP = 10;
+const PADDING = 10;  // 棋盘边距
+
+// --- RNG (Mulberry32) ---
+class RNG {
+  constructor(seed) {
+    this.state = seed >>> 0;
+  }
+  random() {
+    let t = (this.state += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  randInt(min, max) {
+    return Math.floor(this.random() * (max - min + 1)) + min;
+  }
+  sample(array, k) {
+    const result = [];
+    const indices = new Set();
+    const n = array.length;
+    while (result.length < k && result.length < n) {
+      const idx = this.randInt(0, n - 1);
+      if (!indices.has(idx)) {
+        indices.add(idx);
+        result.push(array[idx]);
+      }
+    }
+    return result;
+  }
+  shuffle(array) {
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = this.randInt(0, i);
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }
+  weightedChoice(items, weights) {
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = this.random() * total;
+    for (let i = 0; i < items.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return items[i];
+    }
+    return items[items.length - 1];
+  }
+}
+
+// --- 苔藓模式 ---
+const MOSS_PATTERNS = {
+  none: [],
+  edge_ring: (() => {
+    const cells = [];
+    for (let c = 0; c < 6; c++) { cells.push({row: 0, col: c}); cells.push({row: 5, col: c}); }
+    for (let r = 1; r < 5; r++) { cells.push({row: r, col: 0}); cells.push({row: r, col: 5}); }
+    return cells;
+  })(),
+  corners: [
+    {row:0,col:0},{row:0,col:1},{row:1,col:0},{row:1,col:1},
+    {row:0,col:4},{row:0,col:5},{row:1,col:4},{row:1,col:5},
+    {row:4,col:0},{row:4,col:1},{row:5,col:0},{row:5,col:1},
+    {row:4,col:4},{row:4,col:5},{row:5,col:4},{row:5,col:5}
+  ],
+  center_blob: [
+    {row:2,col:2},{row:2,col:3},{row:3,col:2},{row:3,col:3},
+    {row:1,col:2},{row:1,col:3},{row:4,col:2},{row:4,col:3},
+    {row:2,col:1},{row:3,col:1},{row:2,col:4},{row:3,col:4}
+  ],
+  diagonal: [
+    {row:0,col:0},{row:1,col:1},{row:2,col:2},{row:3,col:3},{row:4,col:4},{row:5,col:5},
+    {row:0,col:1},{row:1,col:2},{row:2,col:3},{row:3,col:4},{row:4,col:5}
+  ]
+};
+
+// --- 基础关卡配置 (前50关手工设计) ---
+const BASE_LEVELS = [
+  // 第1-10关：新手期（不扣体力）
+  { level: 1,  moves: 15, goal: 'collect', item: 'leaf',  count: 8,  pattern: 'none', density: 0 },
+  { level: 2,  moves: 15, goal: 'collect', item: 'acorn', count: 8,  pattern: 'none', density: 0 },
+  { level: 3,  moves: 14, goal: 'collect', item: 'star',  count: 10, pattern: 'none', density: 0 },
+  { level: 4,  moves: 14, goal: 'collect', item: 'fish',  count: 10, pattern: 'none', density: 0 },
+  { level: 5,  moves: 14, goal: 'collect', item: 'bone',  count: 10, pattern: 'corners', density: 0.2 },
+  { level: 6,  moves: 13, goal: 'clear_moss', count: 4,   pattern: 'corners', density: 0.3 },
+  { level: 7,  moves: 13, goal: 'collect', item: 'leaf',  count: 12, pattern: 'corners', density: 0.25 },
+  { level: 8,  moves: 13, goal: 'clear_moss', count: 5,   pattern: 'edge_ring', density: 0.3 },
+  { level: 9,  moves: 12, goal: 'collect', item: 'acorn', count: 12, pattern: 'edge_ring', density: 0.3 },
+  { level: 10, moves: 12, goal: 'clear_moss', count: 6,   pattern: 'center_blob', density: 0.35 },
+
+  // 第11-20关：入门期
+  { level: 11, moves: 12, goal: 'collect', item: 'star',  count: 14, pattern: 'center_blob', density: 0.3 },
+  { level: 12, moves: 12, goal: 'clear_moss', count: 7,   pattern: 'diagonal', density: 0.4 },
+  { level: 13, moves: 11, goal: 'collect', item: 'fish',  count: 14, pattern: 'diagonal', density: 0.35 },
+  { level: 14, moves: 11, goal: 'clear_moss', count: 8,   pattern: 'corners', density: 0.5 },
+  { level: 15, moves: 11, goal: 'collect', item: 'bone',  count: 15, pattern: 'edge_ring', density: 0.4 },
+  { level: 16, moves: 11, goal: 'clear_moss', count: 9,   pattern: 'center_blob', density: 0.5 },
+  { level: 17, moves: 10, goal: 'collect', item: 'leaf',  count: 16, pattern: 'center_blob', density: 0.45 },
+  { level: 18, moves: 10, goal: 'clear_moss', count: 10,  pattern: 'diagonal', density: 0.55 },
+  { level: 19, moves: 10, goal: 'collect', item: 'acorn', count: 16, pattern: 'edge_ring', density: 0.5 },
+  { level: 20, moves: 10, goal: 'clear_moss', count: 10,  pattern: 'corners', density: 0.6 },
+
+  // 第21-30关：进阶期
+  { level: 21, moves: 10, goal: 'collect', item: 'star',  count: 18, pattern: 'center_blob', density: 0.5 },
+  { level: 22, moves: 10, goal: 'clear_moss', count: 11,  pattern: 'diagonal', density: 0.6 },
+  { level: 23, moves: 9,  goal: 'collect', item: 'fish',  count: 16, pattern: 'edge_ring', density: 0.55 },
+  { level: 24, moves: 9,  goal: 'clear_moss', count: 11,  pattern: 'center_blob', density: 0.65 },
+  { level: 25, moves: 9,  goal: 'collect', item: 'bone',  count: 18, pattern: 'diagonal', density: 0.55 },
+  { level: 26, moves: 9,  goal: 'clear_moss', count: 12,  pattern: 'corners', density: 0.7 },
+  { level: 27, moves: 9,  goal: 'collect', item: 'leaf',  count: 20, pattern: 'center_blob', density: 0.6 },
+  { level: 28, moves: 8,  goal: 'clear_moss', count: 12,  pattern: 'edge_ring', density: 0.7 },
+  { level: 29, moves: 8,  goal: 'collect', item: 'acorn', count: 18, pattern: 'diagonal', density: 0.65 },
+  { level: 30, moves: 8,  goal: 'clear_moss', count: 13,  pattern: 'center_blob', density: 0.75 },
+
+  // 第31-40关：挑战期
+  { level: 31, moves: 8,  goal: 'collect', item: 'star',  count: 20, pattern: 'edge_ring', density: 0.65 },
+  { level: 32, moves: 8,  goal: 'clear_moss', count: 13,  pattern: 'diagonal', density: 0.75 },
+  { level: 33, moves: 8,  goal: 'collect', item: 'fish',  count: 20, pattern: 'center_blob', density: 0.7 },
+  { level: 34, moves: 8,  goal: 'clear_moss', count: 14,  pattern: 'corners', density: 0.8 },
+  { level: 35, moves: 7,  goal: 'collect', item: 'bone',  count: 18, pattern: 'diagonal', density: 0.7 },
+  { level: 36, moves: 7,  goal: 'clear_moss', count: 14,  pattern: 'edge_ring', density: 0.8 },
+  { level: 37, moves: 7,  goal: 'collect', item: 'leaf',  count: 22, pattern: 'center_blob', density: 0.75 },
+  { level: 38, moves: 7,  goal: 'clear_moss', count: 15,  pattern: 'diagonal', density: 0.85 },
+  { level: 39, moves: 7,  goal: 'collect', item: 'acorn', count: 22, pattern: 'edge_ring', density: 0.75 },
+  { level: 40, moves: 7,  goal: 'clear_moss', count: 15,  pattern: 'center_blob', density: 0.85 },
+
+  // 第41-50关：大师期
+  { level: 41, moves: 7,  goal: 'collect', item: 'star',  count: 24, pattern: 'diagonal', density: 0.8 },
+  { level: 42, moves: 6,  goal: 'clear_moss', count: 14,  pattern: 'corners', density: 0.9 },
+  { level: 43, moves: 6,  goal: 'collect', item: 'fish',  count: 22, pattern: 'center_blob', density: 0.85 },
+  { level: 44, moves: 6,  goal: 'clear_moss', count: 15,  pattern: 'edge_ring', density: 0.9 },
+  { level: 45, moves: 6,  goal: 'collect', item: 'bone',  count: 24, pattern: 'diagonal', density: 0.85 },
+  { level: 46, moves: 6,  goal: 'clear_moss', count: 16,  pattern: 'center_blob', density: 0.95 },
+  { level: 47, moves: 6,  goal: 'collect', item: 'leaf',  count: 26, pattern: 'edge_ring', density: 0.9 },
+  { level: 48, moves: 5,  goal: 'clear_moss', count: 15,  pattern: 'diagonal', density: 0.95 },
+  { level: 49, moves: 5,  goal: 'collect', item: 'acorn', count: 24, pattern: 'center_blob', density: 0.9 },
+  { level: 50, moves: 5,  goal: 'clear_moss', count: 16,  pattern: 'edge_ring', density: 1.0 }
+];
+
+// --- 无限关卡生成器 ---
+const PATTERN_POOL = ['corners', 'edge_ring', 'center_blob', 'diagonal'];
+
+function generateInfiniteLevel(levelIndex) {
+  // 使用关卡号作为种子，保证每次生成相同的关卡
+  const seed = levelIndex * 31337;
+  const rng = new RNG(seed);
+
+  // 计算难度系数 (50关后逐渐增加，最终趋于稳定)
+  const difficultyOffset = levelIndex - 50;
+  const difficultyFactor = Math.min(1 + difficultyOffset * 0.02, 2.0); // 最高2倍难度
+
+  // 波动周期：每10关一个小周期，有时简单有时难
+  const waveFactor = 0.8 + 0.4 * Math.sin(levelIndex * 0.3);
+
+  // 步数：基础5步，根据难度和波动调整 (4-8步)
+  const baseMovesVariation = rng.randInt(-1, 2);
+  const moves = Math.max(4, Math.min(8, 5 + baseMovesVariation + Math.floor((1 - waveFactor) * 2)));
+
+  // 目标类型：交替收集和清苔藓，偶尔出combo
+  let goal, item, count;
+  const goalRoll = rng.random();
+  if (goalRoll < 0.5) {
+    goal = 'collect';
+    item = TILE_TYPES[rng.randInt(0, TILE_TYPES.length - 1)];
+    // 收集数量：基础20，根据难度增加
+    count = Math.floor(20 + difficultyOffset * 0.3 * waveFactor);
+    count = Math.min(count, 35); // 上限35
+  } else {
+    goal = 'clear_moss';
+    item = null;
+    // 苔藓数量由 density 控制，这里 count 用于记录目标
+    count = 0; // clear_moss 模式下清除所有苔藓
+  }
+
+  // 苔藓 pattern 随机选择
+  const pattern = PATTERN_POOL[rng.randInt(0, PATTERN_POOL.length - 1)];
+
+  // 苔藓密度：基础0.6，根据难度增加，有波动
+  let density = 0.6 + difficultyOffset * 0.01 * waveFactor;
+  density = Math.min(density, 0.95); // 上限95%
+
+  // 特殊关卡标记（每25关一个boss关）
+  const isBossLevel = levelIndex % 25 === 0;
+  if (isBossLevel) {
+    // Boss关：更难
+    count = goal === 'collect' ? Math.min(count + 5, 35) : count;
+    density = Math.min(density + 0.1, 0.98);
+  }
+
+  return {
+    level: levelIndex,
+    moves,
+    goal,
+    item,
+    count,
+    pattern,
+    density,
+    isBossLevel
+  };
+}
+
+// 获取关卡配置（支持无限关卡）
+function getLevelConfig(levelIndex) {
+  if (levelIndex <= BASE_LEVELS.length) {
+    return BASE_LEVELS[levelIndex - 1];
+  }
+  return generateInfiniteLevel(levelIndex);
+}
+
+// 兼容旧代码的 LEVELS 数组访问
+const LEVELS = new Proxy(BASE_LEVELS, {
+  get(target, prop) {
+    if (prop === 'length') return Infinity;
+    const index = parseInt(prop);
+    if (!isNaN(index)) {
+      return getLevelConfig(index + 1);
+    }
+    return target[prop];
+  }
+});
+
+// --- 体力系统配置 ---
+const ENERGY_CONFIG = {
+  max: 5,
+  regenSeconds: 20 * 60,  // 20分钟恢复1点
+  adReward: 1,
+  adHourlyCap: 6,
+  newbieProtection: 10    // 前10关不扣体力
+};
+
+// --- 游戏状态 ---
+let gameState = {
+  board: [],
+  level: 1,
+  moves: 15,
+  goal: null,
+  goalProgress: 0,
+  energy: {
+    current: 5,
+    max: 5,
+    lastRegenTime: Date.now(),
+    adWatchedThisHour: 0,
+    adHourStart: Date.now()
+  },
+  selectedCell: null,
+  isAnimating: false,
+  rng: null
+};
+
+// --- 体力系统函数 ---
+function loadEnergyState() {
+  try {
+    const saved = localStorage.getItem('lanternleaf_energy');
+    if (saved) {
+      const data = JSON.parse(saved);
+      gameState.energy.current = data.current;
+      gameState.energy.lastRegenTime = data.lastRegenTime;
+      gameState.energy.adWatchedThisHour = data.adWatchedThisHour || 0;
+      gameState.energy.adHourStart = data.adHourStart || Date.now();
+
+      // 计算离线期间恢复的体力
+      const now = Date.now();
+      const elapsed = now - gameState.energy.lastRegenTime;
+      const regenPoints = Math.floor(elapsed / (ENERGY_CONFIG.regenSeconds * 1000));
+      if (regenPoints > 0) {
+        gameState.energy.current = Math.min(
+          gameState.energy.max,
+          gameState.energy.current + regenPoints
+        );
+        gameState.energy.lastRegenTime = now;
+      }
+
+      // 重置每小时广告计数
+      if (now - gameState.energy.adHourStart > 3600000) {
+        gameState.energy.adWatchedThisHour = 0;
+        gameState.energy.adHourStart = now;
+      }
+    }
+    // 同时加载关卡进度
+    const levelSaved = localStorage.getItem('lanternleaf_level');
+    if (levelSaved) {
+      gameState.level = parseInt(levelSaved) || 1;
+    }
+  } catch (e) {
+    console.log('Failed to load energy state:', e);
+  }
+}
+
+function saveEnergyState() {
+  try {
+    localStorage.setItem('lanternleaf_energy', JSON.stringify({
+      current: gameState.energy.current,
+      lastRegenTime: gameState.energy.lastRegenTime,
+      adWatchedThisHour: gameState.energy.adWatchedThisHour,
+      adHourStart: gameState.energy.adHourStart
+    }));
+    localStorage.setItem('lanternleaf_level', gameState.level.toString());
+  } catch (e) {
+    console.log('Failed to save energy state:', e);
+  }
+}
+
+function consumeEnergy() {
+  // 新手保护：前N关不扣体力
+  if (gameState.level <= ENERGY_CONFIG.newbieProtection) {
+    return true;
+  }
+
+  if (gameState.energy.current <= 0) {
+    return false;
+  }
+
+  gameState.energy.current--;
+  if (gameState.energy.current < gameState.energy.max &&
+      gameState.energy.lastRegenTime === 0) {
+    gameState.energy.lastRegenTime = Date.now();
+  }
+  saveEnergyState();
+  return true;
+}
+
+function getRegenTimeRemaining() {
+  if (gameState.energy.current >= gameState.energy.max) {
+    return 0;
+  }
+  const elapsed = Date.now() - gameState.energy.lastRegenTime;
+  const remaining = (ENERGY_CONFIG.regenSeconds * 1000) - elapsed;
+  return Math.max(0, remaining);
+}
+
+function formatTime(ms) {
+  const totalSeconds = Math.ceil(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function canWatchAd() {
+  // 检查每小时广告上限
+  const now = Date.now();
+  if (now - gameState.energy.adHourStart > 3600000) {
+    gameState.energy.adWatchedThisHour = 0;
+    gameState.energy.adHourStart = now;
+  }
+  return gameState.energy.adWatchedThisHour < ENERGY_CONFIG.adHourlyCap &&
+         gameState.energy.current < gameState.energy.max;
+}
+
+function watchAdForEnergy() {
+  if (!canWatchAd()) {
+    showMessage('提示', '已达到每小时观看上限', () => {});
+    setTimeout(hideMessage, 1500);
+    return;
+  }
+
+  // 模拟广告观看（实际接入时替换）
+  showMessage('观看广告', '模拟广告播放中...', null);
+  setTimeout(() => {
+    gameState.energy.current = Math.min(
+      gameState.energy.max,
+      gameState.energy.current + ENERGY_CONFIG.adReward
+    );
+    gameState.energy.adWatchedThisHour++;
+    gameState.energy.lastRegenTime = Date.now();
+    saveEnergyState();
+    updateHUD();
+    hideMessage();
+    showMessage('获得体力', `+${ENERGY_CONFIG.adReward} 体力`, () => {});
+    setTimeout(hideMessage, 1000);
+  }, 1500);
+}
+
+// 体力恢复定时器
+let energyTimer = null;
+function startEnergyTimer() {
+  if (energyTimer) clearInterval(energyTimer);
+  energyTimer = setInterval(() => {
+    if (gameState.energy.current < gameState.energy.max) {
+      const elapsed = Date.now() - gameState.energy.lastRegenTime;
+      if (elapsed >= ENERGY_CONFIG.regenSeconds * 1000) {
+        gameState.energy.current++;
+        gameState.energy.lastRegenTime = Date.now();
+        saveEnergyState();
+      }
+    }
+    updateEnergyDisplay();
+  }, 1000);
+}
+
+function updateEnergyDisplay() {
+  const energyEl = document.getElementById('energy');
+  const timerEl = document.getElementById('energyTimer');
+
+  energyEl.textContent = `${gameState.energy.current}/${gameState.energy.max}`;
+
+  if (gameState.energy.current < gameState.energy.max) {
+    const remaining = getRegenTimeRemaining();
+    if (timerEl) timerEl.textContent = formatTime(remaining);
+  } else {
+    if (timerEl) timerEl.textContent = '已满';
+  }
+
+  // 更新体力门槛弹窗中的显示
+  const gateCurrent = document.getElementById('gateEnergyCurrent');
+  const gateMax = document.getElementById('gateEnergyMax');
+  const gateTimer = document.getElementById('gateEnergyTimer');
+  const adRemaining = document.getElementById('adRemaining');
+
+  if (gateCurrent) gateCurrent.textContent = gameState.energy.current;
+  if (gateMax) gateMax.textContent = gameState.energy.max;
+  if (gateTimer) {
+    const remaining = getRegenTimeRemaining();
+    gateTimer.textContent = remaining > 0 ? formatTime(remaining) : '已满';
+  }
+  if (adRemaining) {
+    adRemaining.textContent = ENERGY_CONFIG.adHourlyCap - gameState.energy.adWatchedThisHour;
+  }
+}
+
+function showEnergyGate() {
+  updateEnergyDisplay();
+  document.getElementById('energyGate').style.display = 'flex';
+}
+
+function hideEnergyGate() {
+  document.getElementById('energyGate').style.display = 'none';
+}
+
+function tryStartLevel(levelIndex) {
+  // 新手保护期不检查体力
+  if (levelIndex <= ENERGY_CONFIG.newbieProtection) {
+    initGame(levelIndex);
+    return;
+  }
+
+  // 检查体力
+  if (gameState.energy.current <= 0) {
+    showEnergyGate();
+    return;
+  }
+
+  // 消耗体力并开始游戏
+  if (consumeEnergy()) {
+    initGame(levelIndex);
+  } else {
+    showEnergyGate();
+  }
+}
+
+// --- Canvas 相关 ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// --- 初始化游戏 ---
+function initGame(levelIndex) {
+  const config = getLevelConfig(levelIndex);
+  gameState.level = levelIndex;
+  gameState.moves = config.moves;
+
+  // Boss 关卡特殊标记
+  if (config.isBossLevel) {
+    document.querySelector('.title').textContent = `🔥 BOSS 第${levelIndex}关 🔥`;
+  } else {
+    document.querySelector('.title').textContent = '灯笼叶子消消乐';
+  }
+  gameState.goalProgress = 0;
+  gameState.selectedCell = null;
+  gameState.isAnimating = false;
+  gameState.rng = new RNG(Date.now() + levelIndex * 1000);
+
+  // 设置目标
+  if (config.goal === 'collect') {
+    gameState.goal = { type: 'collect', item: config.item, count: config.count };
+  } else {
+    gameState.goal = { type: 'clear_moss', count: config.count };
+  }
+
+  // 生成苔藓
+  const patternCells = MOSS_PATTERNS[config.pattern] || [];
+  const mossCount = Math.round(patternCells.length * config.density);
+  const mossCells = gameState.rng.sample(patternCells, mossCount);
+  const mossSet = new Set(mossCells.map(c => `${c.row},${c.col}`));
+
+  // 生成棋盘
+  gameState.board = [];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    const row = [];
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      row.push({
+        tile: { type: randomTileType(), isSpecial: false },
+        blocker: mossSet.has(`${r},${c}`) ? { type: 'moss', layer: 1 } : null
+      });
+    }
+    gameState.board.push(row);
+  }
+
+  // 移除初始匹配
+  removeInitialMatches();
+
+  // 确保有有效移动
+  if (!hasValidMove()) {
+    shuffleBoard();
+  }
+
+  // 更新 UI
+  updateHUD();
+  render();
+}
+
+function randomTileType() {
+  return TILE_TYPES[gameState.rng.randInt(0, TILE_TYPES.length - 1)];
+}
+
+function removeInitialMatches() {
+  let matches = findAllMatches();
+  let iterations = 0;
+  while (matches.length > 0 && iterations < 100) {
+    for (const match of matches) {
+      const cell = match.cells[Math.floor(match.cells.length / 2)];
+      const oldType = gameState.board[cell.row][cell.col].tile.type;
+      const otherTypes = TILE_TYPES.filter(t => t !== oldType);
+      gameState.board[cell.row][cell.col].tile.type = otherTypes[gameState.rng.randInt(0, otherTypes.length - 1)];
+    }
+    matches = findAllMatches();
+    iterations++;
+  }
+}
+
+// --- 匹配检测 ---
+function findAllMatches() {
+  const matches = [];
+
+  // 水平
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    let c = 0;
+    while (c < BOARD_SIZE) {
+      const tile = gameState.board[r][c].tile;
+      if (!tile) { c++; continue; }
+      const type = tile.type;
+      let len = 1;
+      while (c + len < BOARD_SIZE && gameState.board[r][c + len].tile?.type === type) {
+        len++;
+      }
+      if (len >= 3) {
+        const cells = [];
+        for (let i = 0; i < len; i++) cells.push({row: r, col: c + i});
+        matches.push({ cells, type, length: len, isHorizontal: true });
+      }
+      c += len;
+    }
+  }
+
+  // 垂直
+  for (let c = 0; c < BOARD_SIZE; c++) {
+    let r = 0;
+    while (r < BOARD_SIZE) {
+      const tile = gameState.board[r][c].tile;
+      if (!tile) { r++; continue; }
+      const type = tile.type;
+      let len = 1;
+      while (r + len < BOARD_SIZE && gameState.board[r + len][c].tile?.type === type) {
+        len++;
+      }
+      if (len >= 3) {
+        const cells = [];
+        for (let i = 0; i < len; i++) cells.push({row: r + i, col: c});
+        matches.push({ cells, type, length: len, isHorizontal: false });
+      }
+      r += len;
+    }
+  }
+
+  return matches;
+}
+
+function wouldSwapMatch(from, to) {
+  // 模拟交换
+  const tempTile = gameState.board[from.row][from.col].tile;
+  gameState.board[from.row][from.col].tile = gameState.board[to.row][to.col].tile;
+  gameState.board[to.row][to.col].tile = tempTile;
+
+  const hasMatch = hasMatchAt(from) || hasMatchAt(to);
+
+  // 换回
+  gameState.board[to.row][to.col].tile = gameState.board[from.row][from.col].tile;
+  gameState.board[from.row][from.col].tile = tempTile;
+
+  return hasMatch;
+}
+
+function hasMatchAt(cell) {
+  const tile = gameState.board[cell.row][cell.col].tile;
+  if (!tile) return false;
+  const type = tile.type;
+
+  // 水平
+  let hCount = 1;
+  for (let c = cell.col - 1; c >= 0 && gameState.board[cell.row][c].tile?.type === type; c--) hCount++;
+  for (let c = cell.col + 1; c < BOARD_SIZE && gameState.board[cell.row][c].tile?.type === type; c++) hCount++;
+  if (hCount >= 3) return true;
+
+  // 垂直
+  let vCount = 1;
+  for (let r = cell.row - 1; r >= 0 && gameState.board[r][cell.col].tile?.type === type; r--) vCount++;
+  for (let r = cell.row + 1; r < BOARD_SIZE && gameState.board[r][cell.col].tile?.type === type; r++) vCount++;
+  return vCount >= 3;
+}
+
+function hasValidMove() {
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (c < BOARD_SIZE - 1 && wouldSwapMatch({row: r, col: c}, {row: r, col: c + 1})) return true;
+      if (r < BOARD_SIZE - 1 && wouldSwapMatch({row: r, col: c}, {row: r + 1, col: c})) return true;
+    }
+  }
+  return false;
+}
+
+function getValidMove() {
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (c < BOARD_SIZE - 1 && wouldSwapMatch({row: r, col: c}, {row: r, col: c + 1})) {
+        return { from: {row: r, col: c}, to: {row: r, col: c + 1} };
+      }
+      if (r < BOARD_SIZE - 1 && wouldSwapMatch({row: r, col: c}, {row: r + 1, col: c})) {
+        return { from: {row: r, col: c}, to: {row: r + 1, col: c} };
+      }
+    }
+  }
+  return null;
+}
+
+function shuffleBoard() {
+  const tiles = [];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (gameState.board[r][c].tile) {
+        tiles.push(gameState.board[r][c].tile);
+      }
+    }
+  }
+  const shuffled = gameState.rng.shuffle(tiles);
+  let idx = 0;
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (gameState.board[r][c].tile) {
+        gameState.board[r][c].tile = shuffled[idx++];
+      }
+    }
+  }
+  removeInitialMatches();
+  showMessage('洗牌', '棋盘已刷新', () => {});
+  setTimeout(() => hideMessage(), 800);
+}
+
+// --- 特殊块触发效果 ---
+function triggerSpecialTile(cell, clearedCells, totalCollected, triggeredSpecials) {
+  const tile = gameState.board[cell.row][cell.col].tile;
+  if (!tile?.isSpecial) return { collected: {}, mossCleared: 0 };
+
+  const key = `${cell.row},${cell.col}`;
+  if (triggeredSpecials.has(key)) return { collected: {}, mossCleared: 0 };
+  triggeredSpecials.add(key);
+
+  const affectedCells = [];
+
+  switch (tile.specialType) {
+    case 'whirl_h': // 清除整行
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        affectedCells.push({ row: cell.row, col: c });
+      }
+      break;
+
+    case 'whirl_v': // 清除整列
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        affectedCells.push({ row: r, col: cell.col });
+      }
+      break;
+
+    case 'lantern': // 清除 3x3 区域
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const r = cell.row + dr;
+          const c = cell.col + dc;
+          if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+            affectedCells.push({ row: r, col: c });
+          }
+        }
+      }
+      break;
+  }
+
+  let mossCleared = 0;
+  const collected = {};
+
+  // 清除受影响的格子
+  for (const c of affectedCells) {
+    const cellKey = `${c.row},${c.col}`;
+    if (clearedCells.has(cellKey)) continue;
+    clearedCells.add(cellKey);
+
+    const boardCell = gameState.board[c.row][c.col];
+
+    // 统计收集
+    if (boardCell.tile) {
+      collected[boardCell.tile.type] = (collected[boardCell.tile.type] || 0) + 1;
+
+      // 连锁触发其他特殊块
+      if (boardCell.tile.isSpecial && cellKey !== key) {
+        const chainResult = triggerSpecialTile(c, clearedCells, totalCollected, triggeredSpecials);
+        for (const [t, n] of Object.entries(chainResult.collected)) {
+          collected[t] = (collected[t] || 0) + n;
+        }
+        mossCleared += chainResult.mossCleared;
+      }
+    }
+
+    // 处理苔藓
+    if (boardCell.blocker?.type === 'moss') {
+      boardCell.blocker.layer--;
+      if (boardCell.blocker.layer <= 0) {
+        boardCell.blocker = null;
+        mossCleared++;
+      }
+    }
+
+    // 清除 tile
+    boardCell.tile = null;
+  }
+
+  return { collected, mossCleared };
+}
+
+// --- 消除处理 ---
+async function resolveMatches() {
+  let cascadeCount = 0;
+  let totalCollected = {};
+  let totalMossCleared = 0;
+
+  while (true) {
+    const matches = findAllMatches();
+    if (matches.length === 0) break;
+
+    cascadeCount++;
+    if (cascadeCount > 1) {
+      showCombo(cascadeCount);
+    }
+
+    // 处理每个匹配
+    const clearedCells = new Set();
+    const triggeredSpecials = new Set();
+    const specialsToCreate = [];  // 延迟创建特殊块
+
+    for (const match of matches) {
+      // 收集统计
+      totalCollected[match.type] = (totalCollected[match.type] || 0) + match.cells.length;
+
+      // 确定特殊块位置
+      const centerIdx = Math.floor(match.cells.length / 2);
+      const centerCell = match.cells[centerIdx];
+
+      for (let i = 0; i < match.cells.length; i++) {
+        const cell = match.cells[i];
+        const key = `${cell.row},${cell.col}`;
+        if (clearedCells.has(key)) continue;
+
+        const boardCell = gameState.board[cell.row][cell.col];
+
+        // 检查是否是特殊块，触发效果
+        if (boardCell.tile?.isSpecial) {
+          const result = triggerSpecialTile(cell, clearedCells, totalCollected, triggeredSpecials);
+          for (const [t, n] of Object.entries(result.collected)) {
+            totalCollected[t] = (totalCollected[t] || 0) + n;
+          }
+          totalMossCleared += result.mossCleared;
+          continue;  // 特殊块已被触发处理
+        }
+
+        clearedCells.add(key);
+
+        // 处理苔藓
+        if (boardCell.blocker?.type === 'moss') {
+          boardCell.blocker.layer--;
+          if (boardCell.blocker.layer <= 0) {
+            boardCell.blocker = null;
+            totalMossCleared++;
+          }
+        }
+
+        // 清除 tile（特殊块位置除外）
+        if (i !== centerIdx || match.length < 4) {
+          boardCell.tile = null;
+        }
+      }
+
+      // 记录需要生成的特殊块
+      if (match.length >= 4) {
+        let specialType;
+        if (match.length >= 5) {
+          specialType = 'lantern';
+        } else {
+          specialType = match.isHorizontal ? 'whirl_h' : 'whirl_v';
+        }
+        specialsToCreate.push({
+          cell: centerCell,
+          type: match.type,
+          specialType
+        });
+      }
+    }
+
+    // 创建特殊块
+    for (const special of specialsToCreate) {
+      gameState.board[special.cell.row][special.cell.col].tile = {
+        type: special.type,
+        isSpecial: true,
+        specialType: special.specialType
+      };
+    }
+
+    render();
+    await sleep(150);
+
+    // 下落（带动画）
+    await animateGravity();
+
+    // 填充（带动画）
+    await animateFill();
+  }
+
+  // 更新目标进度
+  if (gameState.goal.type === 'collect') {
+    gameState.goalProgress += totalCollected[gameState.goal.item] || 0;
+  } else {
+    gameState.goalProgress += totalMossCleared;
+  }
+
+  updateHUD();
+
+  // 检查死局
+  if (!hasValidMove()) {
+    shuffleBoard();
+    render();
+  }
+}
+
+function applyGravity() {
+  for (let c = 0; c < BOARD_SIZE; c++) {
+    let writeRow = BOARD_SIZE - 1;
+    for (let r = BOARD_SIZE - 1; r >= 0; r--) {
+      if (gameState.board[r][c].tile !== null) {
+        if (r !== writeRow) {
+          gameState.board[writeRow][c].tile = gameState.board[r][c].tile;
+          gameState.board[r][c].tile = null;
+        }
+        writeRow--;
+      }
+    }
+  }
+}
+
+function fillEmpty() {
+  for (let c = 0; c < BOARD_SIZE; c++) {
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      if (gameState.board[r][c].tile === null) {
+        gameState.board[r][c].tile = { type: randomTileType(), isSpecial: false };
+      }
+    }
+  }
+}
+
+// --- 简化的坠落动画 ---
+async function animateGravity() {
+  // 直接应用重力并渲染
+  applyGravity();
+  render();
+  await sleep(80);
+}
+
+// --- 简化的填充动画 ---
+async function animateFill() {
+  // 直接填充并渲染
+  fillEmpty();
+  render();
+  await sleep(80);
+}
+
+// --- 交换处理 ---
+async function handleSwap(from, to) {
+  if (gameState.isAnimating) return;
+  gameState.isAnimating = true;
+
+  // 检查是否相邻
+  const dr = Math.abs(from.row - to.row);
+  const dc = Math.abs(from.col - to.col);
+  if (!((dr === 1 && dc === 0) || (dr === 0 && dc === 1))) {
+    gameState.isAnimating = false;
+    return;
+  }
+
+  // 检查是否有效
+  const isValid = wouldSwapMatch(from, to);
+
+  // 执行交换动画
+  await animateSwap(from, to);
+
+  if (isValid) {
+    // 实际交换
+    const temp = gameState.board[from.row][from.col].tile;
+    gameState.board[from.row][from.col].tile = gameState.board[to.row][to.col].tile;
+    gameState.board[to.row][to.col].tile = temp;
+
+    // 消耗步数
+    gameState.moves--;
+    updateHUD();
+
+    // 处理消除
+    await resolveMatches();
+
+    // 检查胜利/失败
+    checkEndCondition();
+  } else {
+    // 无效交换动画
+    await animateSwap(to, from);
+  }
+
+  gameState.isAnimating = false;
+}
+
+// --- 动画 ---
+async function animateSwap(from, to) {
+  const duration = 150;
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < duration) {
+    const progress = (Date.now() - startTime) / duration;
+    render(from, to, progress);
+    await sleep(16);
+  }
+  render();
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// --- 渲染 ---
+function render(swapFrom, swapTo, swapProgress) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 背景
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const offsetX = (canvas.width - BOARD_SIZE * CELL_SIZE - (BOARD_SIZE - 1) * CELL_GAP) / 2;
+  const offsetY = (canvas.height - BOARD_SIZE * CELL_SIZE - (BOARD_SIZE - 1) * CELL_GAP) / 2;
+
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      let x = offsetX + c * (CELL_SIZE + CELL_GAP);
+      let y = offsetY + r * (CELL_SIZE + CELL_GAP);
+
+      // 处理交换动画
+      if (swapFrom && swapTo && swapProgress !== undefined) {
+        if (swapFrom.row === r && swapFrom.col === c) {
+          const tx = offsetX + swapTo.col * (CELL_SIZE + CELL_GAP);
+          const ty = offsetY + swapTo.row * (CELL_SIZE + CELL_GAP);
+          x = x + (tx - x) * swapProgress;
+          y = y + (ty - y) * swapProgress;
+        } else if (swapTo.row === r && swapTo.col === c) {
+          const fx = offsetX + swapFrom.col * (CELL_SIZE + CELL_GAP);
+          const fy = offsetY + swapFrom.row * (CELL_SIZE + CELL_GAP);
+          x = x + (fx - x) * swapProgress;
+          y = y + (fy - y) * swapProgress;
+        }
+      }
+
+      const cell = gameState.board[r][c];
+
+      // 格子背景
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.beginPath();
+      ctx.roundRect(x, y, CELL_SIZE, CELL_SIZE, 8);
+      ctx.fill();
+
+      // 苔藓
+      if (cell.blocker?.type === 'moss') {
+        ctx.fillStyle = 'rgba(100, 150, 100, 0.6)';
+        ctx.beginPath();
+        ctx.roundRect(x + 4, y + 4, CELL_SIZE - 8, CELL_SIZE - 8, 6);
+        ctx.fill();
+      }
+
+      // 选中高亮
+      if (gameState.selectedCell && gameState.selectedCell.row === r && gameState.selectedCell.col === c) {
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(x, y, CELL_SIZE, CELL_SIZE, 8);
+        ctx.stroke();
+      }
+
+      // Tile
+      if (cell.tile) {
+        const tile = cell.tile;
+
+        // 特殊块背景
+        if (tile.isSpecial) {
+          ctx.fillStyle = SPECIAL_COLORS[tile.specialType];
+          ctx.beginPath();
+          ctx.arc(x + CELL_SIZE/2, y + CELL_SIZE/2, CELL_SIZE/2 - 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 绘制 emoji
+        ctx.font = '40px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(TILE_EMOJIS[tile.type], x + CELL_SIZE/2, y + CELL_SIZE/2 + 2);
+
+        // 特殊块标识
+        if (tile.isSpecial) {
+          ctx.font = '16px sans-serif';
+          if (tile.specialType === 'lantern') {
+            ctx.fillText('💥', x + CELL_SIZE - 12, y + 12);
+          } else if (tile.specialType === 'whirl_h') {
+            ctx.fillText('↔', x + CELL_SIZE - 12, y + 12);
+          } else {
+            ctx.fillText('↕', x + CELL_SIZE - 12, y + 12);
+          }
+        }
+      }
+    }
+  }
+}
+
+// --- UI 更新 ---
+function updateHUD() {
+  document.getElementById('levelNum').textContent = gameState.level;
+  document.getElementById('movesLeft').textContent = gameState.moves;
+  document.getElementById('energy').textContent = `${gameState.energy.current}/${gameState.energy.max}`;
+
+  const goal = gameState.goal;
+  if (goal.type === 'collect') {
+    document.getElementById('goalText').textContent =
+      `收集 ${TILE_EMOJIS[goal.item]} ${gameState.goalProgress}/${goal.count}`;
+  } else {
+    document.getElementById('goalText').textContent =
+      `清除苔藓 ${gameState.goalProgress}/${goal.count}`;
+  }
+
+  // 步数警告
+  const movesEl = document.getElementById('movesLeft');
+  if (gameState.moves <= 3) {
+    movesEl.style.color = '#ff6b6b';
+  } else {
+    movesEl.style.color = '#fff';
+  }
+}
+
+function showMessage(title, content, onClose) {
+  document.getElementById('msgTitle').textContent = title;
+  document.getElementById('msgContent').textContent = content;
+  document.getElementById('messageBox').style.display = 'block';
+  document.getElementById('msgBtn').onclick = () => {
+    hideMessage();
+    if (onClose) onClose();
+  };
+}
+
+function hideMessage() {
+  document.getElementById('messageBox').style.display = 'none';
+}
+
+function showCombo(count) {
+  const el = document.getElementById('comboText');
+  el.textContent = `连消 x${count}!`;
+  el.style.opacity = 1;
+  setTimeout(() => { el.style.opacity = 0; }, 800);
+}
+
+function checkEndCondition() {
+  const goal = gameState.goal;
+  const isComplete = gameState.goalProgress >= goal.count;
+
+  if (isComplete) {
+    // 保存进度
+    gameState.level++;
+    saveEnergyState();
+
+    // 更新新手提示显示
+    const newbieHint = document.getElementById('newbieHint');
+    if (gameState.level <= ENERGY_CONFIG.newbieProtection) {
+      newbieHint.style.display = 'block';
+    } else {
+      newbieHint.style.display = 'none';
+    }
+
+    showMessage('恭喜通关!', `剩余 ${gameState.moves} 步`, () => {
+      tryStartLevel(gameState.level);
+    });
+  } else if (gameState.moves <= 0) {
+    showMessage('挑战失败', '再试一次?', () => {
+      tryStartLevel(gameState.level);
+    });
+  }
+}
+
+// --- 输入处理 ---
+let touchStart = null;
+
+canvas.addEventListener('mousedown', (e) => {
+  if (gameState.isAnimating) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const cell = positionToCell(x, y);
+  if (cell) {
+    if (gameState.selectedCell) {
+      handleSwap(gameState.selectedCell, cell);
+      gameState.selectedCell = null;
+    } else {
+      gameState.selectedCell = cell;
+    }
+    render();
+  }
+});
+
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (gameState.isAnimating) return;
+  const touch = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  touchStart = {
+    x: touch.clientX - rect.left,
+    y: touch.clientY - rect.top,
+    cell: positionToCell(touch.clientX - rect.left, touch.clientY - rect.top)
+  };
+  if (touchStart.cell) {
+    gameState.selectedCell = touchStart.cell;
+    render();
+  }
+});
+
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  if (!touchStart || !touchStart.cell || gameState.isAnimating) return;
+
+  const touch = e.changedTouches[0];
+  const rect = canvas.getBoundingClientRect();
+  const endX = touch.clientX - rect.left;
+  const endY = touch.clientY - rect.top;
+
+  const dx = endX - touchStart.x;
+  const dy = endY - touchStart.y;
+
+  if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
+    let targetCell;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      targetCell = { row: touchStart.cell.row, col: touchStart.cell.col + (dx > 0 ? 1 : -1) };
+    } else {
+      targetCell = { row: touchStart.cell.row + (dy > 0 ? 1 : -1), col: touchStart.cell.col };
+    }
+    if (targetCell.row >= 0 && targetCell.row < BOARD_SIZE && targetCell.col >= 0 && targetCell.col < BOARD_SIZE) {
+      handleSwap(touchStart.cell, targetCell);
+    }
+  }
+
+  gameState.selectedCell = null;
+  touchStart = null;
+  render();
+});
+
+function positionToCell(x, y) {
+  const offsetX = (canvas.width - BOARD_SIZE * CELL_SIZE - (BOARD_SIZE - 1) * CELL_GAP) / 2;
+  const offsetY = (canvas.height - BOARD_SIZE * CELL_SIZE - (BOARD_SIZE - 1) * CELL_GAP) / 2;
+
+  const col = Math.floor((x - offsetX) / (CELL_SIZE + CELL_GAP));
+  const row = Math.floor((y - offsetY) / (CELL_SIZE + CELL_GAP));
+
+  if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) {
+    return { row, col };
+  }
+  return null;
+}
+
+// --- 按钮事件 ---
+document.getElementById('hintBtn').addEventListener('click', () => {
+  const move = getValidMove();
+  if (move) {
+    gameState.selectedCell = move.from;
+    render();
+    setTimeout(() => {
+      gameState.selectedCell = move.to;
+      render();
+      setTimeout(() => {
+        gameState.selectedCell = null;
+        render();
+      }, 300);
+    }, 300);
+  }
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  tryStartLevel(gameState.level);
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  gameState.level++;
+  saveEnergyState();
+  tryStartLevel(gameState.level);
+});
+
+// 体力门槛弹窗按钮
+document.getElementById('watchAdBtn').addEventListener('click', () => {
+  watchAdForEnergy();
+  // 广告看完后如果有体力了，自动关闭弹窗
+  setTimeout(() => {
+    if (gameState.energy.current > 0) {
+      hideEnergyGate();
+      tryStartLevel(gameState.level);
+    }
+  }, 2800);
+});
+
+document.getElementById('waitBtn').addEventListener('click', () => {
+  hideEnergyGate();
+});
+
+// --- 启动游戏 ---
+function startup() {
+  // 加载存档
+  loadEnergyState();
+
+  // 显示新手保护提示
+  const newbieHint = document.getElementById('newbieHint');
+  if (gameState.level <= ENERGY_CONFIG.newbieProtection) {
+    newbieHint.style.display = 'block';
+  } else {
+    newbieHint.style.display = 'none';
+  }
+
+  // 启动体力恢复定时器
+  startEnergyTimer();
+
+  // 开始游戏
+  tryStartLevel(gameState.level);
+}
+
+startup();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "__version__": "1.0.0",
+  "general": {
+    "designResolution": {
+      "width": 1080,
+      "height": 1920,
+      "policy": 4,
+      "fitHeight": true,
+      "fitWidth": false
+    },
+    "renderPipeline": null
+  }
+}

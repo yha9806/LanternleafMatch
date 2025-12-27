@@ -1,0 +1,30 @@
+{
+  "__version__": "1.0.0",
+  "wechatgame": {
+    "appid": "YOUR_WECHAT_APPID",
+    "orientation": "portrait",
+    "separateEngine": true,
+    "subpackages": [],
+    "wasmSubpackage": false,
+    "startSceneAssetBundle": false,
+    "remoteServerAddress": "",
+    "bundle": {
+      "startScene": {
+        "bundle": "start-scene",
+        "isRemote": false
+      }
+    },
+    "compressTexture": true,
+    "md5Cache": true,
+    "mainBundleIsRemote": false,
+    "name": "灯笼叶子消消乐"
+  },
+  "bytedance-mini-game": {
+    "appid": "YOUR_DOUYIN_APPID",
+    "orientation": "portrait",
+    "remoteServerAddress": "",
+    "compressTexture": true,
+    "md5Cache": true,
+    "name": "灯笼叶子消消乐"
+  }
+}

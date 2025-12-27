@@ -1,0 +1,42 @@
+{
+  "name": "lanternleaf-match",
+  "version": "1.0.0",
+  "description": "灯笼叶子消消乐 - 清新治愈三消游戏 (WeChat/Douyin Mini-game)",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "vite",
+    "preview": "vite preview",
+    "lint": "eslint assets/scripts --ext .ts",
+    "typecheck": "tsc --noEmit -p tsconfig.cocos.json",
+    "gen:level": "tsx scripts/generate-level.ts"
+  },
+  "keywords": [
+    "match3",
+    "puzzle",
+    "game",
+    "typescript",
+    "cocos-creator",
+    "wechat-minigame",
+    "douyin-minigame"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0",
+    "tsx": "^4.7.0",
+    "eslint": "^8.55.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "creator": {
+    "version": "3.8.8"
+  },
+  "uuid": "27fa2a58-0a34-4eff-8a81-a361c8e10e90"
+}

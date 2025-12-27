@@ -1,0 +1,17 @@
+{
+  "__version__": "1.0.0",
+  "bundleConfig": {
+    "main": {
+      "isRemote": false,
+      "priority": 0
+    },
+    "resources": {
+      "isRemote": false,
+      "priority": 1
+    },
+    "start-scene": {
+      "isRemote": false,
+      "priority": 2
+    }
+  }
+}
