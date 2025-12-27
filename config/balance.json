@@ -1,0 +1,88 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-27T00:00:00.000Z",
+  "constants": {
+    "MOVES_BASE": 14,
+    "MOVES_DECAY": 0.08,
+    "MOVES_WAVE_AMPLITUDE": 1,
+    "MOVES_MIN": 4,
+    "MOVES_MAX": 15,
+    "GOAL_BASE": 8,
+    "GOAL_GROWTH": 0.15,
+    "GOAL_MIN": 6,
+    "GOAL_MAX": 35,
+    "DENSITY_BASE": 0,
+    "DENSITY_GROWTH": 0.006,
+    "DENSITY_CAP": 0.35,
+    "EXPECTED_PER_MOVE": 3.0,
+    "CASCADE_BONUS_MIN": 0.5,
+    "CASCADE_BONUS_MAX": 1.5,
+    "GOAL_WEIGHT_BOOST": 1.08,
+    "WIN_RATE_VOLATILITY": 5.0,
+    "BOSS_LEVEL_INTERVAL": 25,
+    "BOSS_DIFFICULTY_MULTIPLIER": 1.3
+  },
+  "phases": [
+    {
+      "name": "新手期",
+      "levelRange": [1, 10],
+      "targetWinRate": { "min": 0.95, "max": 1.0 },
+      "targetDifficulty": 2
+    },
+    {
+      "name": "成长期",
+      "levelRange": [11, 25],
+      "targetWinRate": { "min": 0.80, "max": 0.95 },
+      "targetDifficulty": 4
+    },
+    {
+      "name": "挑战期",
+      "levelRange": [26, 40],
+      "targetWinRate": { "min": 0.60, "max": 0.85 },
+      "targetDifficulty": 6
+    },
+    {
+      "name": "大师期",
+      "levelRange": [41, 50],
+      "targetWinRate": { "min": 0.45, "max": 0.70 },
+      "targetDifficulty": 8
+    },
+    {
+      "name": "无限期",
+      "levelRange": [51, 999999],
+      "targetWinRate": { "min": 0.30, "max": 0.60 },
+      "targetDifficulty": 9
+    }
+  ],
+  "events": {
+    "bossLevels": [25, 50, 75, 100, 125, 150, 175, 200],
+    "easyLevels": [],
+    "hardLevels": []
+  },
+  "abTests": [
+    {
+      "testId": "moves_balance_v1",
+      "name": "步数平衡测试",
+      "description": "测试不同步数衰减率对胜率的影响",
+      "enabled": false,
+      "parameter": "constants.MOVES_DECAY",
+      "variants": [
+        { "name": "control", "value": 0.08, "weight": 50 },
+        { "name": "easier", "value": 0.06, "weight": 25 },
+        { "name": "harder", "value": 0.10, "weight": 25 }
+      ]
+    },
+    {
+      "testId": "goal_weight_v1",
+      "name": "目标权重测试",
+      "description": "测试目标物品权重加成对收集效率的影响",
+      "enabled": false,
+      "parameter": "constants.GOAL_WEIGHT_BOOST",
+      "variants": [
+        { "name": "control", "value": 1.08, "weight": 50 },
+        { "name": "low", "value": 1.05, "weight": 25 },
+        { "name": "high", "value": 1.12, "weight": 25 }
+      ]
+    }
+  ]
+}

@@ -55,3 +55,35 @@ export {
   createDefaultConfig,
 } from './BalanceFormulas';
 export type { BalanceConfig } from './BalanceFormulas';
+
+// 配置管理
+export {
+  BalanceConfigManager,
+  getBalanceConfigManager,
+  resetBalanceConfigManager,
+} from './BalanceConfig';
+export type {
+  BalanceConfigData,
+  ABTest,
+  ABTestVariant,
+  ABTestAssignment,
+  ConfigChangeListener,
+} from './BalanceConfig';
+
+// 埋点分析
+export {
+  AnalyticsManager,
+  ANALYTICS_EVENTS,
+  getAnalyticsManager,
+  initAnalytics,
+  resetAnalytics,
+} from './Analytics';
+export type {
+  AnalyticsEvent,
+  AnalyticsEventName,
+  AnalyticsConfig,
+  LevelStartData,
+  LevelEndData,
+  MoveData,
+  AdWatchData,
+} from './Analytics';
