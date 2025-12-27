@@ -87,3 +87,32 @@ export type {
   MoveData,
   AdWatchData,
 } from './Analytics';
+
+// 关卡分析
+export { LevelAnalyzer } from './LevelAnalyzer';
+export type {
+  LevelPlayData,
+  LevelStats,
+  DifficultySpike,
+  BalanceIssue,
+  AnalysisReport,
+} from './LevelAnalyzer';
+
+// 自动调优
+export { AutoTuner } from './AutoTuner';
+export type {
+  TuningRecommendation,
+  LevelParams,
+  ParamChange,
+  TuningConfig,
+  TuningResult,
+} from './AutoTuner';
+
+// 动态难度
+export { DynamicDifficulty } from './DynamicDifficulty';
+export type {
+  PlayerProfile,
+  PlaySession,
+  DifficultyModifier,
+  DDAConfig,
+} from './DynamicDifficulty';
