@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>灯笼叶子消消乐 - 留存系统演示</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #FFD700;
+      --primary-dark: #FFA500;
+      --success: #4CAF50;
+      --danger: #ff6b6b;
+      --bg-dark: #1a3518;
+      --bg-light: #2d5a27;
+      --text: #fff;
+      --text-muted: rgba(255,255,255,0.7);
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-dark) 100%);
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .header h1 { font-size: 20px; }
+    .back-btn {
+      background: rgba(0,0,0,0.3);
+      border: none;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* Resource Bar */
+    .resource-bar {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .resource-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,0,0,0.3);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+    .resource-item .icon { font-size: 18px; }
+    .resource-item .value { color: var(--primary); font-weight: bold; }
+
+    /* Streak HUD */
+    .streak-hud {
+      background: linear-gradient(135deg, rgba(255,100,0,0.3), rgba(255,50,0,0.2));
+      border: 2px solid rgba(255,150,0,0.5);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .streak-hud::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,200,0,0.1) 0%, transparent 50%);
+      animation: rotate 10s linear infinite;
+    }
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .streak-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .streak-fire {
+      font-size: 60px;
+      animation: fire 0.5s ease-in-out infinite alternate;
+    }
+    @keyframes fire {
+      from { transform: scale(1) rotate(-5deg); filter: brightness(1); }
+      to { transform: scale(1.1) rotate(5deg); filter: brightness(1.2); }
+    }
+    .streak-info { flex: 1; }
+    .streak-count {
+      font-size: 48px;
+      font-weight: bold;
+      color: var(--primary);
+      text-shadow: 0 0 20px rgba(255,200,0,0.5);
+    }
+    .streak-label { font-size: 14px; opacity: 0.8; }
+    .streak-rewards {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .streak-reward-badge {
+      background: rgba(0,0,0,0.3);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .streak-milestone {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--primary);
+      color: #333;
+      padding: 4px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: bold;
+      animation: pulse 1s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Section Tabs */
+    .section-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+    .section-tab {
+      flex-shrink: 0;
+      padding: 12px 20px;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid transparent;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .section-tab:hover { background: rgba(255,255,255,0.2); }
+    .section-tab.active {
+      background: rgba(255,255,255,0.25);
+      border-color: var(--primary);
+    }
+    .section-tab .icon { margin-right: 6px; }
+
+    /* Content Area */
+    .content-area {
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 20px;
+      min-height: 400px;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Pre-Booster Selection */
+    .booster-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .booster-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border: 2px solid transparent;
+      border-radius: 15px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .booster-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,255,255,0.3);
+    }
+    .booster-card.selected {
+      border-color: var(--primary);
+      background: linear-gradient(145deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1));
+      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+    }
+    .booster-card.free {
+      border-color: var(--success);
+    }
+    .booster-card .icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .booster-card .name {
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+    .booster-card .price {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    .booster-card .free-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--success);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: bold;
+      animation: bounce 1s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    .board-preview {
+      background: rgba(0,0,0,0.3);
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .board-preview-title {
+      font-size: 14px;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+    }
+    .preview-cell {
+      aspect-ratio: 1;
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .preview-cell.booster {
+      background: rgba(255,215,0,0.3);
+      border: 1px solid var(--primary);
+      animation: glow 1.5s ease-in-out infinite;
+    }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(255,215,0,0.3); }
+      50% { box-shadow: 0 0 15px rgba(255,215,0,0.6); }
+    }
+
+    .start-btn {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      border-radius: 30px;
+      color: #333;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .start-btn:hover { transform: scale(1.02); }
+
+    /* Smart Recommendation */
+    .recommendation-card {
+      background: linear-gradient(135deg, rgba(156,39,176,0.2), rgba(103,58,183,0.2));
+      border: 2px solid rgba(156,39,176,0.5);
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .recommendation-card::before {
+      content: '💡';
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      font-size: 40px;
+      opacity: 0.2;
+    }
+    .recommendation-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .recommendation-header .icon {
+      font-size: 24px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .recommendation-header .title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #CE93D8;
+    }
+    .recommendation-body {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 12px;
+    }
+    .recommendation-boosters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .recommendation-booster {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,0,0,0.3);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .recommendation-booster:hover {
+      background: rgba(156,39,176,0.3);
+      transform: scale(1.05);
+    }
+    .recommendation-booster.selected {
+      background: rgba(156,39,176,0.4);
+      border: 1px solid #CE93D8;
+    }
+    .recommendation-booster .icon { font-size: 20px; }
+    .recommendation-booster .name { font-size: 11px; }
+    .recommendation-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 16px;
+      cursor: pointer;
+      opacity: 0.5;
+    }
+    .recommendation-close:hover { opacity: 1; }
+
+    /* Streak Simulation */
+    .sim-controls {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .sim-btn {
+      padding: 15px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    .sim-btn:active { transform: scale(0.95); }
+    .sim-btn.win {
+      background: linear-gradient(135deg, var(--success), #45a049);
+      color: #fff;
+    }
+    .sim-btn.lose {
+      background: linear-gradient(135deg, var(--danger), #ff4757);
+      color: #fff;
+    }
+    .sim-btn.reset {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+    .sim-btn.trigger {
+      background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+      color: #fff;
+    }
+
+    /* Event Log */
+    .event-log {
+      background: rgba(0,0,0,0.4);
+      border-radius: 15px;
+      padding: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .event-log-title {
+      font-size: 14px;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+    .event-item {
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      margin-bottom: 5px;
+      font-size: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .event-item.win { border-left: 3px solid var(--success); }
+    .event-item.lose { border-left: 3px solid var(--danger); }
+    .event-item.reward { border-left: 3px solid var(--primary); }
+    .event-item.minigame { border-left: 3px solid #9c27b0; }
+    .event-time { opacity: 0.6; font-size: 10px; }
+
+    /* Mini Games Enhanced */
+    .minigame-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .minigame-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border-radius: 15px;
+      padding: 20px 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .minigame-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s;
+    }
+    .minigame-card:hover::before { left: 100%; }
+    .minigame-card:hover { transform: translateY(-5px); }
+    .minigame-card .icon { font-size: 48px; margin-bottom: 10px; }
+    .minigame-card .name { font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+    .minigame-card .desc { font-size: 11px; opacity: 0.7; }
+    .minigame-card .stats {
+      margin-top: 10px;
+      font-size: 10px;
+      opacity: 0.6;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: linear-gradient(145deg, var(--bg-light), var(--bg-dark));
+      border-radius: 25px;
+      padding: 30px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      animation: modalIn 0.3s ease-out;
+    }
+    @keyframes modalIn {
+      from { transform: scale(0.8) translateY(20px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    /* Win Modal */
+    .win-modal .icon { font-size: 80px; margin-bottom: 15px; }
+    .win-modal .title {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    .win-modal .subtitle { font-size: 14px; opacity: 0.8; margin-bottom: 20px; }
+    .win-modal .rewards {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+    .win-modal .reward {
+      background: rgba(0,0,0,0.3);
+      padding: 15px 25px;
+      border-radius: 15px;
+    }
+    .win-modal .reward .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    .win-modal .reward .label { font-size: 12px; opacity: 0.7; }
+    .win-modal .streak-bonus {
+      background: linear-gradient(135deg, rgba(255,100,0,0.3), rgba(255,50,0,0.2));
+      border: 1px solid rgba(255,150,0,0.5);
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .win-modal .streak-bonus .fire { font-size: 24px; }
+    .win-modal .streak-bonus .text { font-size: 14px; margin-top: 5px; }
+
+    /* Lose Modal */
+    .lose-modal .icon { font-size: 80px; margin-bottom: 15px; }
+    .lose-modal .title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .lose-modal .streak-warning {
+      background: rgba(255,100,0,0.2);
+      border: 1px solid rgba(255,100,0,0.5);
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .lose-modal .streak-warning .fire { font-size: 32px; }
+    .lose-modal .streak-warning .text { font-size: 14px; margin-top: 8px; }
+    .lose-modal .revival-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .revival-btn {
+      padding: 15px;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .revival-btn.ad {
+      background: linear-gradient(135deg, var(--success), #45a049);
+      color: #fff;
+    }
+    .revival-btn.gems {
+      background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+      color: #fff;
+    }
+    .revival-btn .icon { font-size: 20px; }
+
+    .modal-btn {
+      padding: 15px 40px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .modal-btn.primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #333;
+    }
+    .modal-btn.secondary {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      margin-top: 10px;
+    }
+
+    /* Confetti */
+    .confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2000;
+      overflow: hidden;
+    }
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      animation: confetti-fall 3s ease-out forwards;
+    }
+    @keyframes confetti-fall {
+      0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Streak History Timeline */
+    .timeline {
+      position: relative;
+      padding-left: 30px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+    }
+    .timeline-item {
+      position: relative;
+      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      margin-bottom: 15px;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -26px;
+      top: 20px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 3px solid var(--bg-dark);
+    }
+    .timeline-item.win::before { background: var(--success); }
+    .timeline-item.lose::before { background: var(--danger); }
+    .timeline-item.milestone::before {
+      background: var(--primary);
+      width: 16px;
+      height: 16px;
+      left: -28px;
+      top: 18px;
+      box-shadow: 0 0 10px var(--primary);
+    }
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .timeline-title {
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .timeline-time {
+      font-size: 11px;
+      opacity: 0.6;
+    }
+    .timeline-content {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    .timeline-streak {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,100,0,0.3);
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .timeline-rewards {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .timeline-reward {
+      background: rgba(0,0,0,0.2);
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+    }
+    .timeline-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .timeline-stat {
+      background: rgba(0,0,0,0.3);
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .timeline-stat .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    .timeline-stat .label {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+    .timeline-chart {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      height: 100px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .chart-bar {
+      flex: 1;
+      background: var(--success);
+      border-radius: 4px 4px 0 0;
+      min-height: 4px;
+      transition: height 0.3s;
+      position: relative;
+    }
+    .chart-bar.lose { background: var(--danger); }
+    .chart-bar:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    /* Flow Diagram */
+    .flow-diagram {
+      background: rgba(0,0,0,0.3);
+      border-radius: 15px;
+      padding: 20px;
+    }
+    .flow-title {
+      font-size: 14px;
+      margin-bottom: 15px;
+      opacity: 0.8;
+    }
+    .flow-nodes {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .flow-node {
+      background: rgba(255,255,255,0.15);
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 12px;
+      text-align: center;
+      flex: 1;
+    }
+    .flow-node.active {
+      background: rgba(255,215,0,0.3);
+      border: 1px solid var(--primary);
+    }
+    .flow-arrow {
+      font-size: 18px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="back-btn" onclick="location.href='menu.html'">← 返回</button>
+      <h1>留存系统演示</h1>
+    </div>
+
+    <!-- Resource Bar -->
+    <div class="resource-bar">
+      <div class="resource-item">
+        <span class="icon">💰</span>
+        <span class="value" id="coins">1000</span>
+      </div>
+      <div class="resource-item">
+        <span class="icon">💎</span>
+        <span class="value" id="gems">50</span>
+      </div>
+      <div class="resource-item">
+        <span class="icon">⚡</span>
+        <span class="value">5/5</span>
+      </div>
+    </div>
+
+    <!-- Streak HUD -->
+    <div class="streak-hud">
+      <div class="streak-content">
+        <div class="streak-fire" id="streakFire">🔥</div>
+        <div class="streak-info">
+          <div class="streak-count" id="streakCount">0</div>
+          <div class="streak-label">连胜</div>
+          <div class="streak-rewards" id="streakRewards">
+            <span class="streak-reward-badge">下一奖励: +50 💰</span>
+          </div>
+        </div>
+      </div>
+      <div class="streak-milestone" id="streakMilestone" style="display:none;">5连胜!</div>
+    </div>
+
+    <!-- Section Tabs -->
+    <div class="section-tabs">
+      <button class="section-tab active" data-section="streak" onclick="showSection('streak')">
+        <span class="icon">🔥</span>连胜模拟
+      </button>
+      <button class="section-tab" data-section="history" onclick="showSection('history')">
+        <span class="icon">📈</span>历史记录
+      </button>
+      <button class="section-tab" data-section="boosters" onclick="showSection('boosters')">
+        <span class="icon">🚀</span>预置道具
+      </button>
+      <button class="section-tab" data-section="minigames" onclick="showSection('minigames')">
+        <span class="icon">🎮</span>迷你游戏
+      </button>
+      <button class="section-tab" data-section="flow" onclick="showSection('flow')">
+        <span class="icon">📊</span>系统流程
+      </button>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+
+      <!-- Streak Section -->
+      <div class="section active" id="section-streak">
+        <h3 style="margin-bottom: 15px;">模拟关卡结果</h3>
+        <div class="sim-controls">
+          <button class="sim-btn win" onclick="simulateWin()">✅ 通关</button>
+          <button class="sim-btn lose" onclick="simulateLose()">❌ 失败</button>
+          <button class="sim-btn reset" onclick="resetStreak()">🔄 重置</button>
+          <button class="sim-btn trigger" onclick="triggerMiniGame()">🎮 触发迷你游戏</button>
+        </div>
+
+        <div class="event-log">
+          <div class="event-log-title">📋 事件日志</div>
+          <div id="eventLog"></div>
+        </div>
+      </div>
+
+      <!-- History Timeline Section -->
+      <div class="section" id="section-history">
+        <h3 style="margin-bottom: 15px;">📈 连胜历史记录</h3>
+
+        <!-- Stats Overview -->
+        <div class="timeline-stats">
+          <div class="timeline-stat">
+            <div class="value" id="historyMaxStreak">0</div>
+            <div class="label">最高连胜</div>
+          </div>
+          <div class="timeline-stat">
+            <div class="value" id="historyTotalWins">0</div>
+            <div class="label">总胜利</div>
+          </div>
+          <div class="timeline-stat">
+            <div class="value" id="historyWinRate">0%</div>
+            <div class="label">胜率</div>
+          </div>
+        </div>
+
+        <!-- Streak Chart -->
+        <div style="margin-bottom: 10px; font-size: 12px; opacity: 0.7;">连胜走势图 (最近20局)</div>
+        <div class="timeline-chart" id="streakChart"></div>
+
+        <!-- Timeline -->
+        <div style="margin-bottom: 10px; font-size: 12px; opacity: 0.7;">最近记录</div>
+        <div class="timeline" id="historyTimeline">
+          <div style="text-align: center; opacity: 0.5; padding: 30px;">
+            暂无记录，开始游戏后将显示历史
+          </div>
+        </div>
+      </div>
+
+      <!-- Boosters Section -->
+      <div class="section" id="section-boosters">
+        <h3 style="margin-bottom: 15px;">选择预置道具</h3>
+
+        <!-- Smart Recommendation (shown after failures) -->
+        <div class="recommendation-card" id="recommendationCard" style="display: none;">
+          <button class="recommendation-close" onclick="hideRecommendation()">✕</button>
+          <div class="recommendation-header">
+            <span class="icon">💡</span>
+            <span class="title">智能推荐</span>
+          </div>
+          <div class="recommendation-body" id="recommendationText">
+            根据您之前的游戏表现，我们推荐以下道具帮助通关：
+          </div>
+          <div class="recommendation-boosters" id="recommendationBoosters"></div>
+        </div>
+
+        <div class="booster-grid">
+          <div class="booster-card" data-booster="rocket" onclick="toggleBooster(this)">
+            <span class="icon">🚀</span>
+            <div class="name">火箭</div>
+            <div class="price">50 💰</div>
+          </div>
+          <div class="booster-card" data-booster="bomb" onclick="toggleBooster(this)">
+            <span class="icon">💣</span>
+            <div class="name">炸弹</div>
+            <div class="price">80 💰</div>
+          </div>
+          <div class="booster-card free" data-booster="rainbow" onclick="toggleBooster(this)">
+            <span class="icon">🌈</span>
+            <div class="name">彩虹</div>
+            <div class="price">免费</div>
+            <div class="free-badge">连胜奖励!</div>
+          </div>
+          <div class="booster-card" data-booster="shuffle" onclick="toggleBooster(this)">
+            <span class="icon">🔀</span>
+            <div class="name">洗牌</div>
+            <div class="price">30 💰</div>
+          </div>
+          <div class="booster-card" data-booster="hammer" onclick="toggleBooster(this)">
+            <span class="icon">🔨</span>
+            <div class="name">锤子</div>
+            <div class="price">60 💰</div>
+          </div>
+          <div class="booster-card" data-booster="lightning" onclick="toggleBooster(this)">
+            <span class="icon">⚡</span>
+            <div class="name">闪电</div>
+            <div class="price">100 💰</div>
+          </div>
+        </div>
+
+        <div class="board-preview">
+          <div class="board-preview-title">🎯 棋盘预览 - 道具将放置在随机位置</div>
+          <div class="preview-grid" id="previewGrid"></div>
+        </div>
+
+        <button class="start-btn" onclick="startLevel()">开始关卡 →</button>
+      </div>
+
+      <!-- Mini Games Section -->
+      <div class="section" id="section-minigames">
+        <h3 style="margin-bottom: 15px;">选择迷你游戏</h3>
+        <div class="minigame-cards">
+          <div class="minigame-card" onclick="playMiniGame('rescue')">
+            <div class="icon">🐱</div>
+            <div class="name">救援行动</div>
+            <div class="desc">10秒内选择正确选项</div>
+            <div class="stats">已玩: <span id="rescuePlayed">0</span></div>
+          </div>
+          <div class="minigame-card" onclick="playMiniGame('colorsort')">
+            <div class="icon">🎨</div>
+            <div class="name">颜色排序</div>
+            <div class="desc">按顺序点击方块</div>
+            <div class="stats">已玩: <span id="colorsortPlayed">0</span></div>
+          </div>
+          <div class="minigame-card" onclick="playMiniGame('treasure')">
+            <div class="icon">🗺️</div>
+            <div class="name">寻宝挖掘</div>
+            <div class="desc">找到隐藏的宝藏</div>
+            <div class="stats">已玩: <span id="treasurePlayed">0</span></div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+          <a href="minigames.html" class="start-btn" style="display: inline-block; text-decoration: none;">
+            进入迷你游戏 →
+          </a>
+        </div>
+      </div>
+
+      <!-- Flow Section -->
+      <div class="section" id="section-flow">
+        <h3 style="margin-bottom: 15px;">系统连接流程</h3>
+        <div class="flow-diagram">
+          <div class="flow-title">留存系统闭环</div>
+          <div class="flow-nodes">
+            <div class="flow-row">
+              <div class="flow-node active">🎮 开始关卡</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node">🚀 选择预置道具</div>
+            </div>
+            <div class="flow-row" style="justify-content: center;">
+              <span class="flow-arrow">↓</span>
+            </div>
+            <div class="flow-row">
+              <div class="flow-node">✅ 通关</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node active">🔥 连胜 +1</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node">🎁 奖励</div>
+            </div>
+            <div class="flow-row" style="justify-content: center;">
+              <span class="flow-arrow">↓</span>
+            </div>
+            <div class="flow-row">
+              <div class="flow-node">🎮 触发迷你游戏</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node">💰 额外奖励</div>
+            </div>
+            <div class="flow-row" style="justify-content: center;">
+              <span class="flow-arrow">↓</span>
+            </div>
+            <div class="flow-row">
+              <div class="flow-node">❌ 失败</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node active">📺 广告复活</div>
+              <span class="flow-arrow">→</span>
+              <div class="flow-node">🔥 保持连胜</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 15px;">
+          <h4 style="margin-bottom: 10px; font-size: 14px;">📈 关键指标目标</h4>
+          <ul style="font-size: 12px; opacity: 0.8; padding-left: 20px;">
+            <li>次日留存率: 40% → 50%+</li>
+            <li>7日留存率: 15% → 25%+</li>
+            <li>广告观看率: 20% → 35%+</li>
+            <li>平均每用户收益: +30%</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Win Modal -->
+  <div class="modal-overlay" id="winModal">
+    <div class="modal win-modal">
+      <div class="icon">🎉</div>
+      <div class="title">关卡通过!</div>
+      <div class="subtitle">恭喜你完成了第 <span id="winLevel">1</span> 关</div>
+      <div class="rewards">
+        <div class="reward">
+          <div class="value" id="winCoins">+100</div>
+          <div class="label">金币</div>
+        </div>
+        <div class="reward">
+          <div class="value" id="winStars">⭐⭐⭐</div>
+          <div class="label">评价</div>
+        </div>
+      </div>
+      <div class="streak-bonus" id="winStreakBonus">
+        <div class="fire">🔥</div>
+        <div class="text"><span id="winStreakCount">3</span> 连胜! 额外奖励 <span id="winStreakReward">+50 💰</span></div>
+      </div>
+      <button class="modal-btn primary" onclick="closeWinModal()">继续</button>
+    </div>
+  </div>
+
+  <!-- Lose Modal -->
+  <div class="modal-overlay" id="loseModal">
+    <div class="modal lose-modal">
+      <div class="icon">😢</div>
+      <div class="title">关卡失败</div>
+      <div class="streak-warning" id="loseStreakWarning">
+        <div class="fire">🔥</div>
+        <div class="text">你的 <span id="loseStreakCount">5</span> 连胜即将失去!</div>
+      </div>
+      <div class="revival-options">
+        <button class="revival-btn ad" onclick="reviveWithAd()">
+          <span class="icon">📺</span>
+          <span>观看广告保持连胜</span>
+        </button>
+        <button class="revival-btn gems" onclick="reviveWithGems()">
+          <span class="icon">💎</span>
+          <span>花费 30 宝石保持连胜</span>
+        </button>
+      </div>
+      <button class="modal-btn secondary" onclick="acceptLoss()">放弃连胜</button>
+    </div>
+  </div>
+
+  <!-- Confetti Container -->
+  <div class="confetti-container" id="confettiContainer"></div>
+
+<script>
+// ============================================
+// State
+// ============================================
+let streak = 0;
+let coins = 1000;
+let gems = 50;
+let level = 1;
+let selectedBoosters = [];
+const events = [];
+const miniGameStats = { rescue: 0, colorsort: 0, treasure: 0 };
+
+// History tracking
+const gameHistory = [];
+let maxStreakEver = 0;
+let totalWins = 0;
+let totalGames = 0;
+
+// Streak rewards config
+const STREAK_REWARDS = {
+  1: { coins: 50 },
+  2: { coins: 75 },
+  3: { coins: 100, gems: 1 },
+  4: { coins: 125 },
+  5: { coins: 150, gems: 2, booster: 'rocket' },
+  6: { coins: 175 },
+  7: { coins: 200, gems: 3 },
+  8: { coins: 250 },
+  9: { coins: 300, gems: 4 },
+  10: { coins: 500, gems: 5, booster: 'super_rainbow' },
+};
+
+// ============================================
+// UI Functions
+// ============================================
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.querySelector(`[data-section="${name}"]`).classList.add('active');
+
+  if (name === 'boosters') {
+    renderBoardPreview();
+  }
+}
+
+function updateUI() {
+  document.getElementById('coins').textContent = coins;
+  document.getElementById('gems').textContent = gems;
+  document.getElementById('streakCount').textContent = streak;
+
+  // Update streak fire animation
+  const fire = document.getElementById('streakFire');
+  if (streak >= 10) {
+    fire.textContent = '🔥🔥🔥';
+    fire.style.fontSize = '50px';
+  } else if (streak >= 5) {
+    fire.textContent = '🔥🔥';
+    fire.style.fontSize = '55px';
+  } else if (streak >= 1) {
+    fire.textContent = '🔥';
+    fire.style.fontSize = '60px';
+  } else {
+    fire.textContent = '💨';
+    fire.style.fontSize = '50px';
+  }
+
+  // Update next reward
+  const nextStreak = streak + 1;
+  const nextReward = STREAK_REWARDS[Math.min(nextStreak, 10)];
+  let rewardText = '';
+  if (nextReward.coins) rewardText += `+${nextReward.coins} 💰 `;
+  if (nextReward.gems) rewardText += `+${nextReward.gems} 💎 `;
+  if (nextReward.booster) rewardText += `+🚀`;
+  document.getElementById('streakRewards').innerHTML =
+    `<span class="streak-reward-badge">下一奖励: ${rewardText}</span>`;
+
+  // Milestone indicator
+  const milestone = document.getElementById('streakMilestone');
+  if (streak > 0 && streak % 5 === 0) {
+    milestone.textContent = `${streak}连胜!`;
+    milestone.style.display = 'block';
+  } else {
+    milestone.style.display = 'none';
+  }
+}
+
+function addEvent(type, message) {
+  const time = new Date().toLocaleTimeString();
+  events.unshift({ type, message, time });
+  if (events.length > 20) events.pop();
+
+  const log = document.getElementById('eventLog');
+  log.innerHTML = events.map(e => `
+    <div class="event-item ${e.type}">
+      <span class="event-time">${e.time}</span>
+      <span>${e.message}</span>
+    </div>
+  `).join('');
+}
+
+// ============================================
+// Streak Simulation
+// ============================================
+function simulateWin() {
+  streak++;
+  level++;
+  consecutiveFailures = 0; // Reset failures on win
+  hideRecommendation(); // Hide recommendation on win
+
+  // Calculate rewards
+  const reward = STREAK_REWARDS[Math.min(streak, 10)];
+  let baseCoins = 100;
+  let totalCoins = baseCoins + (reward.coins || 0);
+
+  coins += totalCoins;
+  if (reward.gems) gems += reward.gems;
+
+  addEvent('win', `🎉 关卡 ${level-1} 通关! +${totalCoins} 💰`);
+  if (reward.gems) addEvent('reward', `💎 连胜奖励 +${reward.gems} 宝石`);
+  if (reward.booster) addEvent('reward', `🚀 获得道具: ${reward.booster}`);
+
+  // Add to history
+  addHistoryEntry('win', {
+    level: level - 1,
+    streak: streak,
+    rewards: {
+      coins: totalCoins,
+      gems: reward.gems || 0,
+      booster: reward.booster || null
+    }
+  });
+
+  // Show win modal
+  document.getElementById('winLevel').textContent = level - 1;
+  document.getElementById('winCoins').textContent = '+' + totalCoins;
+  document.getElementById('winStreakCount').textContent = streak;
+  document.getElementById('winStreakReward').textContent = `+${reward.coins || 0} 💰`;
+
+  if (reward.gems) {
+    document.getElementById('winStreakReward').textContent += ` +${reward.gems} 💎`;
+  }
+
+  document.getElementById('winModal').classList.add('show');
+
+  // Confetti for milestones
+  if (streak % 5 === 0) {
+    showConfetti();
+  }
+
+  updateUI();
+}
+
+function simulateLose() {
+  if (streak > 0) {
+    document.getElementById('loseStreakCount').textContent = streak;
+    document.getElementById('loseModal').classList.add('show');
+  } else {
+    addEvent('lose', `❌ 关卡 ${level} 失败`);
+  }
+}
+
+function reviveWithAd() {
+  addEvent('reward', `📺 观看广告, 保持 ${streak} 连胜!`);
+  document.getElementById('loseModal').classList.remove('show');
+}
+
+function reviveWithGems() {
+  if (gems >= 30) {
+    gems -= 30;
+    addEvent('reward', `💎 花费 30 宝石, 保持 ${streak} 连胜!`);
+  } else {
+    addEvent('lose', `❌ 宝石不足`);
+    streak = 0;
+  }
+  document.getElementById('loseModal').classList.remove('show');
+  updateUI();
+}
+
+function acceptLoss() {
+  addEvent('lose', `❌ 关卡 ${level} 失败, 失去 ${streak} 连胜`);
+
+  // Add to history before resetting streak
+  addHistoryEntry('lose', {
+    level: level,
+    streak: streak,
+    rewards: {}
+  });
+
+  streak = 0;
+  consecutiveFailures++;
+  document.getElementById('loseModal').classList.remove('show');
+  updateUI();
+
+  // Show recommendation after failure
+  if (consecutiveFailures >= 1) {
+    const types = ['moss_heavy', 'low_moves', 'collect_goal', 'general'];
+    const randomType = types[Math.floor(Math.random() * types.length)];
+    showRecommendation(randomType);
+
+    // Auto switch to boosters section
+    setTimeout(() => {
+      showSection('boosters');
+    }, 300);
+  }
+}
+
+function resetStreak() {
+  streak = 0;
+  level = 1;
+  coins = 1000;
+  gems = 50;
+  events.length = 0;
+  document.getElementById('eventLog').innerHTML = '';
+  addEvent('reset', '🔄 状态已重置');
+  updateUI();
+}
+
+function closeWinModal() {
+  document.getElementById('winModal').classList.remove('show');
+
+  // Maybe trigger mini game
+  if (streak % 5 === 0) {
+    setTimeout(() => {
+      if (confirm('🎮 恭喜达成里程碑! 要玩一局迷你游戏吗?')) {
+        window.location.href = 'minigames.html';
+      }
+    }, 300);
+  }
+}
+
+function triggerMiniGame() {
+  addEvent('minigame', '🎮 触发迷你游戏!');
+  window.location.href = 'minigames.html';
+}
+
+// ============================================
+// Pre-Boosters
+// ============================================
+let showingRecommendation = false;
+let consecutiveFailures = 0;
+
+// Recommendation data
+const RECOMMENDATIONS = {
+  moss_heavy: {
+    text: '这关有大量苔藓，推荐使用清除道具：',
+    boosters: [
+      { id: 'bomb', icon: '💣', name: '炸弹', reason: '清除3x3区域' },
+      { id: 'lightning', icon: '⚡', name: '闪电', reason: '清除整行/列' }
+    ]
+  },
+  low_moves: {
+    text: '步数有限，推荐增加效率的道具：',
+    boosters: [
+      { id: 'rainbow', icon: '🌈', name: '彩虹', reason: '消除同色' },
+      { id: 'shuffle', icon: '🔀', name: '洗牌', reason: '重新排列' }
+    ]
+  },
+  collect_goal: {
+    text: '收集目标较多，推荐以下道具：',
+    boosters: [
+      { id: 'rocket', icon: '🚀', name: '火箭', reason: '快速消除' },
+      { id: 'hammer', icon: '🔨', name: '锤子', reason: '定点消除' }
+    ]
+  },
+  general: {
+    text: '根据您的游戏风格，推荐以下道具：',
+    boosters: [
+      { id: 'rocket', icon: '🚀', name: '火箭', reason: '通用高效' },
+      { id: 'bomb', icon: '💣', name: '炸弹', reason: '范围清除' }
+    ]
+  }
+};
+
+function showRecommendation(type = 'general') {
+  const card = document.getElementById('recommendationCard');
+  const textEl = document.getElementById('recommendationText');
+  const boostersEl = document.getElementById('recommendationBoosters');
+
+  const rec = RECOMMENDATIONS[type] || RECOMMENDATIONS.general;
+
+  textEl.textContent = rec.text;
+  boostersEl.innerHTML = rec.boosters.map(b => `
+    <div class="recommendation-booster" data-booster="${b.id}" onclick="selectRecommendedBooster('${b.id}', this)">
+      <span class="icon">${b.icon}</span>
+      <div>
+        <div class="name">${b.name}</div>
+        <div style="font-size: 10px; opacity: 0.7;">${b.reason}</div>
+      </div>
+    </div>
+  `).join('');
+
+  card.style.display = 'block';
+  showingRecommendation = true;
+}
+
+function hideRecommendation() {
+  document.getElementById('recommendationCard').style.display = 'none';
+  showingRecommendation = false;
+}
+
+function selectRecommendedBooster(boosterId, element) {
+  // Find and click the corresponding booster card
+  const boosterCard = document.querySelector(`.booster-card[data-booster="${boosterId}"]`);
+  if (boosterCard && !boosterCard.classList.contains('selected')) {
+    toggleBooster(boosterCard);
+  }
+
+  // Highlight the recommendation booster
+  element.classList.add('selected');
+}
+
+function toggleBooster(card) {
+  const booster = card.dataset.booster;
+
+  if (card.classList.contains('selected')) {
+    card.classList.remove('selected');
+    selectedBoosters = selectedBoosters.filter(b => b !== booster);
+  } else {
+    if (selectedBoosters.length >= 3) {
+      alert('最多选择 3 个道具');
+      return;
+    }
+    card.classList.add('selected');
+    selectedBoosters.push(booster);
+  }
+
+  renderBoardPreview();
+}
+
+function renderBoardPreview() {
+  const grid = document.getElementById('previewGrid');
+  const cells = [];
+
+  // Generate random booster positions
+  const boosterPositions = new Set();
+  while (boosterPositions.size < selectedBoosters.length) {
+    boosterPositions.add(Math.floor(Math.random() * 36));
+  }
+
+  const boosterIcons = {
+    rocket: '🚀', bomb: '💣', rainbow: '🌈',
+    shuffle: '🔀', hammer: '🔨', lightning: '⚡'
+  };
+
+  const posArray = [...boosterPositions];
+
+  for (let i = 0; i < 36; i++) {
+    const isBooster = posArray.includes(i);
+    const boosterIdx = posArray.indexOf(i);
+
+    cells.push(`
+      <div class="preview-cell ${isBooster ? 'booster' : ''}">
+        ${isBooster ? boosterIcons[selectedBoosters[boosterIdx]] : ''}
+      </div>
+    `);
+  }
+
+  grid.innerHTML = cells.join('');
+}
+
+function startLevel() {
+  if (selectedBoosters.length > 0) {
+    addEvent('reward', `🚀 使用道具: ${selectedBoosters.join(', ')}`);
+  }
+  alert('开始关卡! (返回连胜模拟测试通关/失败)');
+  showSection('streak');
+}
+
+// ============================================
+// Mini Games
+// ============================================
+function playMiniGame(type) {
+  miniGameStats[type]++;
+  document.getElementById(type + 'Played').textContent = miniGameStats[type];
+  window.location.href = 'minigames.html';
+}
+
+// ============================================
+// Confetti Effect
+// ============================================
+function showConfetti() {
+  const container = document.getElementById('confettiContainer');
+  const colors = ['#FFD700', '#FF6B6B', '#4CAF50', '#2196F3', '#9C27B0', '#FF9800'];
+
+  for (let i = 0; i < 50; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+    confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+    container.appendChild(confetti);
+
+    setTimeout(() => confetti.remove(), 3000);
+  }
+}
+
+// ============================================
+// History Timeline
+// ============================================
+function addHistoryEntry(type, data) {
+  const entry = {
+    type,
+    level: data.level,
+    streak: data.streak,
+    rewards: data.rewards || {},
+    time: new Date().toLocaleTimeString(),
+    timestamp: Date.now()
+  };
+  gameHistory.unshift(entry);
+  if (gameHistory.length > 50) gameHistory.pop();
+
+  totalGames++;
+  if (type === 'win') totalWins++;
+  if (data.streak > maxStreakEver) maxStreakEver = data.streak;
+
+  updateHistoryUI();
+}
+
+function updateHistoryUI() {
+  // Update stats
+  document.getElementById('historyMaxStreak').textContent = maxStreakEver;
+  document.getElementById('historyTotalWins').textContent = totalWins;
+  document.getElementById('historyWinRate').textContent =
+    totalGames > 0 ? Math.round(totalWins / totalGames * 100) + '%' : '0%';
+
+  // Update chart
+  renderStreakChart();
+
+  // Update timeline
+  renderHistoryTimeline();
+}
+
+function renderStreakChart() {
+  const chart = document.getElementById('streakChart');
+  const last20 = gameHistory.slice(0, 20).reverse();
+
+  if (last20.length === 0) {
+    chart.innerHTML = '<div style="flex:1; display:flex; align-items:center; justify-content:center; opacity:0.5;">暂无数据</div>';
+    return;
+  }
+
+  const maxStreak = Math.max(...last20.map(g => g.streak), 1);
+
+  chart.innerHTML = last20.map((game, i) => {
+    const height = Math.max(10, (game.streak / maxStreak) * 80);
+    const isLose = game.type === 'lose';
+    return `
+      <div class="chart-bar ${isLose ? 'lose' : ''}"
+           style="height: ${height}%"
+           data-tooltip="关卡${game.level}: ${game.type === 'win' ? '胜利' : '失败'} (${game.streak}连胜)">
+      </div>
+    `;
+  }).join('');
+}
+
+function renderHistoryTimeline() {
+  const timeline = document.getElementById('historyTimeline');
+  const recent = gameHistory.slice(0, 10);
+
+  if (recent.length === 0) {
+    timeline.innerHTML = '<div style="text-align: center; opacity: 0.5; padding: 30px;">暂无记录，开始游戏后将显示历史</div>';
+    return;
+  }
+
+  timeline.innerHTML = recent.map(entry => {
+    const isMilestone = entry.type === 'win' && entry.streak % 5 === 0 && entry.streak > 0;
+    const typeClass = entry.type === 'win' ? 'win' : 'lose';
+    const milestoneClass = isMilestone ? 'milestone' : '';
+
+    let rewardsHtml = '';
+    if (entry.rewards) {
+      const badges = [];
+      if (entry.rewards.coins) badges.push(`<span class="timeline-reward">+${entry.rewards.coins} 💰</span>`);
+      if (entry.rewards.gems) badges.push(`<span class="timeline-reward">+${entry.rewards.gems} 💎</span>`);
+      if (entry.rewards.booster) badges.push(`<span class="timeline-reward">+🚀 ${entry.rewards.booster}</span>`);
+      if (badges.length > 0) {
+        rewardsHtml = `<div class="timeline-rewards">${badges.join('')}</div>`;
+      }
+    }
+
+    return `
+      <div class="timeline-item ${typeClass} ${milestoneClass}">
+        <div class="timeline-header">
+          <div class="timeline-title">
+            ${entry.type === 'win' ? '✅' : '❌'} 关卡 ${entry.level}
+            ${isMilestone ? '🎉' : ''}
+          </div>
+          <div class="timeline-time">${entry.time}</div>
+        </div>
+        <div class="timeline-content">
+          ${entry.type === 'win' ? '通关成功' : '挑战失败'}
+        </div>
+        ${entry.streak > 0 ? `<div class="timeline-streak">🔥 ${entry.streak} 连胜</div>` : ''}
+        ${rewardsHtml}
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================
+// Init
+// ============================================
+updateUI();
+renderBoardPreview();
+updateHistoryUI();
+addEvent('reward', '✨ 留存系统演示已加载');
+</script>
+</body>
+</html>

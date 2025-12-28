@@ -1,0 +1,162 @@
+{
+  "version": "1.0.0",
+  "featureFlags": {
+    "winStreak": true,
+    "preBoosters": true,
+    "miniGames": true,
+    "streakRevival": true,
+    "smartRecommendation": true
+  },
+  "winStreak": {
+    "enabled": true,
+    "maxStreak": 999,
+    "rewards": {
+      "1": { "coins": 50 },
+      "2": { "coins": 75 },
+      "3": { "coins": 100, "gems": 1 },
+      "4": { "coins": 125 },
+      "5": { "coins": 150, "gems": 2, "booster": "rocket" },
+      "6": { "coins": 175 },
+      "7": { "coins": 200, "gems": 3 },
+      "8": { "coins": 250 },
+      "9": { "coins": 300, "gems": 4 },
+      "10": { "coins": 500, "gems": 5, "booster": "super_rainbow" }
+    },
+    "milestones": [5, 10, 15, 20, 25, 50, 100],
+    "revival": {
+      "adRevivalEnabled": true,
+      "adRevivalDailyLimit": 3,
+      "gemRevivalCost": 30,
+      "gemRevivalEnabled": true
+    }
+  },
+  "preBoosters": {
+    "enabled": true,
+    "maxSelection": 3,
+    "boosters": {
+      "rocket": {
+        "name": "火箭",
+        "icon": "rocket",
+        "price": 50,
+        "unlockLevel": 1,
+        "effect": "clear_row"
+      },
+      "bomb": {
+        "name": "炸弹",
+        "icon": "bomb",
+        "price": 80,
+        "unlockLevel": 5,
+        "effect": "clear_3x3"
+      },
+      "rainbow": {
+        "name": "彩虹",
+        "icon": "rainbow",
+        "price": 120,
+        "unlockLevel": 10,
+        "effect": "clear_color"
+      },
+      "shuffle": {
+        "name": "洗牌",
+        "icon": "shuffle",
+        "price": 30,
+        "unlockLevel": 1,
+        "effect": "shuffle_board"
+      },
+      "hammer": {
+        "name": "锤子",
+        "icon": "hammer",
+        "price": 60,
+        "unlockLevel": 8,
+        "effect": "break_one"
+      },
+      "lightning": {
+        "name": "闪电",
+        "icon": "lightning",
+        "price": 100,
+        "unlockLevel": 15,
+        "effect": "clear_column"
+      },
+      "super_rainbow": {
+        "name": "超级彩虹",
+        "icon": "super_rainbow",
+        "price": 200,
+        "unlockLevel": 20,
+        "effect": "clear_two_colors",
+        "streakExclusive": true
+      }
+    },
+    "discounts": {
+      "failureDiscount": 0.5,
+      "streakDiscount": 0.3,
+      "firstTimeDiscount": 0.2
+    },
+    "recommendation": {
+      "enabled": true,
+      "triggerAfterFailures": 2,
+      "showDiscount": true
+    }
+  },
+  "miniGames": {
+    "enabled": true,
+    "triggerChance": 0.3,
+    "cooldownMinutes": 30,
+    "streakThreshold": 5,
+    "levelInterval": 5,
+    "weights": {
+      "rescue": 40,
+      "color_sort": 35,
+      "treasure_hunt": 25
+    },
+    "rescue": {
+      "timeLimit": 10,
+      "scenarios": 6,
+      "rewards": {
+        "success": { "coins": 100, "boosterChance": 0.3 },
+        "fail": { "coins": 20 }
+      }
+    },
+    "colorSort": {
+      "difficulties": {
+        "easy": { "colors": 4, "timeLimit": 15 },
+        "medium": { "colors": 5, "timeLimit": 12 },
+        "hard": { "colors": 6, "timeLimit": 10 }
+      },
+      "maxMistakes": 2,
+      "rewards": {
+        "perfect": { "coins": 100 },
+        "partial": { "coins": 70 },
+        "fail": { "coins": 15 }
+      }
+    },
+    "treasureHunt": {
+      "gridSize": 5,
+      "baseShovels": 5,
+      "maxAdShovels": 3,
+      "rewards": {
+        "empty": { "coins": 0 },
+        "coins_small": { "coins": 20 },
+        "coins_medium": { "coins": 50 },
+        "coins_large": { "coins": 100 },
+        "gems": { "gems": 1 },
+        "booster": { "boosterChance": 1.0 },
+        "treasure": { "coins": 200, "gems": 3 }
+      }
+    }
+  },
+  "analytics": {
+    "events": {
+      "streak_start": true,
+      "streak_end": true,
+      "streak_milestone": true,
+      "streak_revival_ad": true,
+      "streak_revival_gem": true,
+      "prebooster_select": true,
+      "prebooster_purchase": true,
+      "prebooster_free": true,
+      "minigame_trigger": true,
+      "minigame_start": true,
+      "minigame_complete": true,
+      "minigame_skip": true
+    }
+  }
+}
