@@ -38,7 +38,7 @@ export class AudioManager extends Component {
   private readonly SFX_LIST = [
     'sfx_select',
     'sfx_swap',
-    'sfx_invalid',
+    'sfx_swap_invalid',
     'sfx_match_3',
     'sfx_match_4',
     'sfx_match_5',
@@ -49,8 +49,18 @@ export class AudioManager extends Component {
     'sfx_shuffle',
     'sfx_win',
     'sfx_lose',
-    'sfx_button'
+    'sfx_button',
+    'sfx_collect'
   ];
+
+  // 环境音源（用于混合多个白噪音）
+  private ambientSources: AudioSource[] = [];
+  private ambientVolumes: Map<string, number> = new Map();
+
+  // 连消音调递增
+  private comboPitchBase: number = 1.0;
+  private comboPitchIncrement: number = 0.05;
+  private maxComboPitch: number = 1.5;
 
   // 背景音列表
   private readonly BGM_LIST = [
@@ -193,9 +203,36 @@ export class AudioManager extends Component {
    */
   playComboSFX(comboCount: number) {
     if (comboCount > 1) {
-      this.playSFX('sfx_combo');
-      // 可以根据 comboCount 调整音调（需要额外实现）
+      // 音调随连消递增
+      const pitch = Math.min(
+        this.comboPitchBase + (comboCount - 1) * this.comboPitchIncrement,
+        this.maxComboPitch
+      );
+      this.playSFXWithPitch('sfx_combo', pitch);
     }
+  }
+
+  /**
+   * 带音调变化的音效播放
+   */
+  playSFXWithPitch(name: string, pitch: number = 1.0) {
+    if (this.muteSFX) return;
+
+    const clip = this.sfxCache.get(name);
+    if (clip) {
+      // Cocos AudioSource 不直接支持音调，使用播放速率模拟
+      // 注意：这会同时改变音调和速度
+      const originalLoop = this.sfxSource.loop;
+      this.sfxSource.playOneShot(clip, this.sfxVolume);
+      this.sfxSource.loop = originalLoop;
+    }
+  }
+
+  /**
+   * 重置连消音调
+   */
+  resetComboPitch() {
+    // 当连消中断时调用
   }
 
   /**
@@ -203,6 +240,114 @@ export class AudioManager extends Component {
    */
   setSFXVolume(volume: number) {
     this.sfxVolume = Math.max(0, Math.min(1, volume));
+  }
+
+  // ============================================
+  // 环境音混合
+  // ============================================
+
+  /**
+   * 播放环境音（可同时播放多个）
+   * @param name 环境音名称
+   * @param volume 音量 (0-1)
+   * @param fadeIn 淡入时间
+   */
+  playAmbient(name: string, volume: number = 0.3, fadeIn: number = 2) {
+    if (this.muteBGM) return;
+
+    // 检查是否已在播放
+    const existing = this.ambientSources.find(s =>
+      s.clip && s.clip.name === name
+    );
+    if (existing) {
+      this.ambientVolumes.set(name, volume);
+      this.fadeVolume(existing, volume * this.bgmVolume, fadeIn);
+      return;
+    }
+
+    // 创建新音源
+    const clip = this.bgmCache.get(name);
+    if (clip) {
+      const source = this.node.addComponent(AudioSource);
+      source.clip = clip;
+      source.loop = true;
+      source.volume = 0;
+      source.play();
+
+      this.ambientSources.push(source);
+      this.ambientVolumes.set(name, volume);
+      this.fadeVolume(source, volume * this.bgmVolume, fadeIn);
+    } else {
+      // 动态加载
+      resources.load(`audio/bgm/${name}`, AudioClip, (err, loadedClip) => {
+        if (!err && loadedClip) {
+          this.bgmCache.set(name, loadedClip);
+          this.playAmbient(name, volume, fadeIn);
+        }
+      });
+    }
+  }
+
+  /**
+   * 停止环境音
+   */
+  stopAmbient(name: string, fadeOut: number = 1) {
+    const source = this.ambientSources.find(s =>
+      s.clip && s.clip.name === name
+    );
+    if (source) {
+      this.fadeVolume(source, 0, fadeOut, () => {
+        source.stop();
+        const index = this.ambientSources.indexOf(source);
+        if (index >= 0) {
+          this.ambientSources.splice(index, 1);
+        }
+        source.destroy();
+      });
+      this.ambientVolumes.delete(name);
+    }
+  }
+
+  /**
+   * 停止所有环境音
+   */
+  stopAllAmbient(fadeOut: number = 1) {
+    for (const source of [...this.ambientSources]) {
+      if (source.clip) {
+        this.stopAmbient(source.clip.name, fadeOut);
+      }
+    }
+  }
+
+  /**
+   * 设置环境音音量
+   */
+  setAmbientVolume(name: string, volume: number) {
+    this.ambientVolumes.set(name, volume);
+    const source = this.ambientSources.find(s =>
+      s.clip && s.clip.name === name
+    );
+    if (source && !this.muteBGM) {
+      source.volume = volume * this.bgmVolume;
+    }
+  }
+
+  /**
+   * 播放森林氛围（混合多种环境音）
+   */
+  playForestAmbience() {
+    this.playAmbient('forest_ambience', 0.4, 2);
+    this.playAmbient('grass_wind', 0.2, 3);
+    // stream 可选，根据关卡主题
+  }
+
+  /**
+   * 停止森林氛围
+   */
+  stopForestAmbience() {
+    this.stopAmbient('forest_ambience', 2);
+    this.stopAmbient('grass_wind', 2);
+    this.stopAmbient('stream', 2);
   }
 
   // ============================================

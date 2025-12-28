@@ -3,6 +3,7 @@ import {
 } from 'cc';
 import { GameController } from '../core/GameController';
 import { EnergyManager } from '../core/EnergyManager';
+import { SceneManager, gameState, playerProgress } from '../core';
 import { BoardView } from './BoardView';
 import { HudView } from '../ui/HudView';
 import { ModalManager } from '../ui/ModalManager';
@@ -45,6 +46,14 @@ export class GameManager extends Component {
 
   start() {
     this.loadPlayerState();
+
+    // 检查是否从关卡选择传入了关卡
+    const selectedLevel = SceneManager.getSceneData<number>('level');
+    if (selectedLevel !== undefined) {
+      this.currentLevel = selectedLevel;
+      SceneManager.clearSceneData();
+    }
+
     this.startLevel(this.currentLevel);
   }
 
@@ -204,6 +213,13 @@ export class GameManager extends Component {
   }
 
   private onLevelComplete(state: LevelState) {
+    // 计算星级（简化：剩余步数越多星级越高）
+    let stars = 1;
+    if (state.movesLeft >= 5) stars = 3;
+    else if (state.movesLeft >= 2) stars = 2;
+
+    // 更新玩家进度
+    playerProgress.completeLevel(this.currentLevel, stars);
     this.savePlayerState();
 
     this.modalManager.showWinModal({
@@ -264,8 +280,15 @@ export class GameManager extends Component {
     }
   }
 
-  private quitToMenu() {
-    director.loadScene('Menu');
+  private async quitToMenu() {
+    await gameState.goToMainMenu();
+  }
+
+  /**
+   * 返回关卡选择
+   */
+  private async quitToLevelSelect() {
+    await gameState.goToLevelSelect();
   }
 
   private loadPlayerState() {
