@@ -598,6 +598,220 @@
       80% { transform: translateX(5px); }
     }
 
+    /* 宝物收集动画 */
+    .treasure-collect-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: overlay-fade-in 0.3s ease-out;
+    }
+    @keyframes overlay-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .treasure-box {
+      position: relative;
+      animation: treasure-appear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes treasure-appear {
+      0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+      60% { transform: scale(1.3) rotate(5deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    .treasure-icon {
+      font-size: 80px;
+      text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,165,0,0.5);
+      animation: treasure-glow-big 1s ease-in-out infinite alternate;
+    }
+    @keyframes treasure-glow-big {
+      from { filter: brightness(1) drop-shadow(0 0 20px gold); }
+      to { filter: brightness(1.3) drop-shadow(0 0 40px gold); }
+    }
+    .treasure-sparkles {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200px;
+      height: 200px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .sparkle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: radial-gradient(circle, #FFD700 0%, transparent 70%);
+      border-radius: 50%;
+      animation: sparkle-burst 1s ease-out forwards;
+    }
+    @keyframes sparkle-burst {
+      0% { opacity: 1; transform: translate(0, 0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0); }
+    }
+    .treasure-reward {
+      position: absolute;
+      top: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 28px;
+      font-weight: bold;
+      color: #FFD700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      white-space: nowrap;
+      animation: reward-bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+    }
+    @keyframes reward-bounce-in {
+      0% { transform: translateX(-50%) scale(0); opacity: 0; }
+      100% { transform: translateX(-50%) scale(1); opacity: 1; }
+    }
+    .treasure-coins-fly {
+      position: fixed;
+      font-size: 24px;
+      z-index: 1001;
+      animation: coin-fly 0.8s ease-in forwards;
+      pointer-events: none;
+    }
+    @keyframes coin-fly {
+      0% { opacity: 1; }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.5); }
+    }
+
+    /* 胜利结算界面 */
+    .victory-modal {
+      background: linear-gradient(180deg, #2d1b4e 0%, #1a1030 100%);
+      border: 3px solid #FFD700;
+      border-radius: 20px;
+      padding: 30px;
+      min-width: 320px;
+      text-align: center;
+      animation: victory-slide-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes victory-slide-in {
+      0% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .victory-title {
+      font-size: 32px;
+      font-weight: bold;
+      color: #FFD700;
+      text-shadow: 0 0 10px rgba(255,215,0,0.5);
+      margin-bottom: 10px;
+    }
+    .victory-level {
+      font-size: 18px;
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+    .victory-stars {
+      font-size: 40px;
+      margin-bottom: 20px;
+    }
+    .victory-star {
+      display: inline-block;
+      opacity: 0;
+      transform: scale(0) rotate(-180deg);
+      animation: star-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .victory-star:nth-child(1) { animation-delay: 0.2s; }
+    .victory-star:nth-child(2) { animation-delay: 0.4s; }
+    .victory-star:nth-child(3) { animation-delay: 0.6s; }
+    .victory-star.empty { filter: grayscale(1) brightness(0.5); }
+    @keyframes star-pop {
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+    .victory-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 15px;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #fff;
+    }
+    .stat-value.counting {
+      animation: count-pulse 0.1s ease-in-out;
+    }
+    @keyframes count-pulse {
+      50% { transform: scale(1.2); color: #FFD700; }
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+    .victory-rewards {
+      margin-bottom: 20px;
+    }
+    .reward-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+      font-size: 20px;
+      opacity: 0;
+      animation: reward-slide-in 0.4s ease-out forwards;
+    }
+    .reward-row:nth-child(1) { animation-delay: 0.8s; }
+    .reward-row:nth-child(2) { animation-delay: 1.0s; }
+    .reward-row:nth-child(3) { animation-delay: 1.2s; }
+    @keyframes reward-slide-in {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .victory-btn {
+      padding: 15px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(180deg, #4CAF50 0%, #2E7D32 100%);
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(76,175,80,0.4);
+      transition: all 0.3s;
+      opacity: 0;
+      animation: btn-appear 0.5s ease-out 1.4s forwards;
+    }
+    @keyframes btn-appear {
+      to { opacity: 1; }
+    }
+    .victory-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(76,175,80,0.6);
+    }
+
+    /* 失败界面 */
+    .defeat-modal {
+      background: linear-gradient(180deg, #3d1f1f 0%, #1a0a0a 100%);
+      border: 3px solid #8B0000;
+    }
+    .defeat-modal .victory-title {
+      color: #ff6666;
+      text-shadow: 0 0 10px rgba(255,100,100,0.5);
+    }
+    .defeat-btn {
+      background: linear-gradient(180deg, #FF5722 0%, #D84315 100%);
+      box-shadow: 0 4px 15px rgba(255,87,34,0.4);
+    }
+    .defeat-btn:hover {
+      box-shadow: 0 6px 20px rgba(255,87,34,0.6);
+    }
+
     /* 商店样式 */
     .shop-items {
       display: flex;
@@ -686,6 +900,11 @@
       text-align: center;
       min-width: 300px;
       animation: popIn 0.3s ease-out;
+    }
+    /* 森林探索使用新样式时，容器透明 */
+    .result-content:has(.victory-modal) {
+      background: transparent;
+      padding: 0;
     }
     @keyframes popIn {
       from { transform: scale(0.8); opacity: 0; }
@@ -831,6 +1050,14 @@ let exploreGameStatus = 'idle'; // 'playing' | 'won' | 'lost' | 'shopping'
 let exploreFlagMode = false;
 let exploreStartPos = null;
 let exploreExitPos = null;
+// 统计数据
+let exploreStats = {
+  cellsRevealed: 0,
+  treasuresCollected: 0,
+  trapsHit: 0,
+  levelStartCoins: 0,
+  levelStartGems: 0
+};
 
 // ============================================
 // Collection Sort Game (收集整理)
@@ -1234,6 +1461,15 @@ function initExploreGame() {
     exploreItems = { maps: 1, picks: 1 };
   }
 
+  // 重置关卡统计
+  exploreStats = {
+    cellsRevealed: 0,
+    treasuresCollected: 0,
+    trapsHit: 0,
+    levelStartCoins: exploreCoins,
+    levelStartGems: exploreGems
+  };
+
   exploreFlagMode = false;
   exploreGameStatus = 'playing';
 
@@ -1448,6 +1684,13 @@ function clickExploreCell(row, col) {
   if (exploreGameStatus !== 'playing') return;
 
   const cell = exploreGrid[row][col];
+
+  // 已揭示的出口可以点击过关
+  if (cell.revealed && cell.type === 'exit') {
+    endExploreGame(true);
+    return;
+  }
+
   if (cell.revealed) return;
 
   if (exploreFlagMode) {
@@ -1463,6 +1706,7 @@ function revealExploreCell(row, col, usePick = false) {
   if (cell.revealed || cell.flagged) return;
 
   cell.revealed = true;
+  exploreStats.cellsRevealed++;
   const typeInfo = EXPLORE_CELL_TYPES[cell.type];
 
   // 动画效果
@@ -1476,6 +1720,7 @@ function revealExploreCell(row, col, usePick = false) {
   if (cell.type === 'trap' && !usePick) {
     // 踩到陷阱
     exploreLives--;
+    exploreStats.trapsHit++;
     setTimeout(() => {
       renderExploreGame();
       shakeScreen();
@@ -1492,15 +1737,24 @@ function revealExploreCell(row, col, usePick = false) {
   } else {
     // 收集奖励
     if (typeInfo.reward) {
+      exploreStats.treasuresCollected++;
       if (typeInfo.reward.coins) exploreCoins += typeInfo.reward.coins;
       if (typeInfo.reward.gems) exploreGems += typeInfo.reward.gems;
-      setTimeout(() => {
-        renderExploreGame();
-        const newCell = document.querySelector(`.explore-cell[data-row="${row}"][data-col="${col}"]`);
-        if (newCell && typeInfo.reward.coins) {
-          createRewardPopup(newCell, `+${typeInfo.reward.coins}💰`);
-        }
-      }, 300);
+
+      // 高价值宝物显示华丽动画
+      if (cell.type === 'treasure' || cell.type === 'gem') {
+        showTreasureCollectAnimation(cell.type, typeInfo);
+      } else {
+        // 普通宝物显示简单弹出
+        setTimeout(() => {
+          renderExploreGame();
+          const newCell = document.querySelector(`.explore-cell[data-row="${row}"][data-col="${col}"]`);
+          if (newCell) {
+            const rewardText = typeInfo.reward.coins ? `+${typeInfo.reward.coins}💰` : '+1💎';
+            createRewardPopup(newCell, rewardText);
+          }
+        }, 300);
+      }
     } else {
       // 空格子，如果数字为0则自动展开周围
       if (cell.adjacentTraps === 0 && cell.type === 'empty') {
@@ -1513,6 +1767,54 @@ function revealExploreCell(row, col, usePick = false) {
       }
     }
   }
+}
+
+// 华丽的宝物收集动画
+function showTreasureCollectAnimation(type, typeInfo) {
+  const overlay = document.createElement('div');
+  overlay.className = 'treasure-collect-overlay';
+
+  const icon = EXPLORE_CELL_TYPES[type].icon;
+  const rewardText = typeInfo.reward.coins
+    ? `+${typeInfo.reward.coins} 金币`
+    : '+1 宝石';
+
+  overlay.innerHTML = `
+    <div class="treasure-box">
+      <div class="treasure-sparkles"></div>
+      <div class="treasure-icon">${icon}</div>
+      <div class="treasure-reward">${rewardText}</div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // 添加闪光粒子
+  const sparkles = overlay.querySelector('.treasure-sparkles');
+  for (let i = 0; i < 12; i++) {
+    const sparkle = document.createElement('div');
+    sparkle.className = 'sparkle';
+    const angle = (Math.PI * 2 / 12) * i;
+    const distance = 60 + Math.random() * 40;
+    sparkle.style.setProperty('--sx', `${Math.cos(angle) * distance}px`);
+    sparkle.style.setProperty('--sy', `${Math.sin(angle) * distance}px`);
+    sparkle.style.left = '50%';
+    sparkle.style.top = '50%';
+    sparkle.style.animationDelay = `${i * 0.05}s`;
+    sparkles.appendChild(sparkle);
+  }
+
+  // 点击或自动关闭
+  const closeOverlay = () => {
+    overlay.style.animation = 'overlay-fade-in 0.2s ease-out reverse';
+    setTimeout(() => {
+      overlay.remove();
+      renderExploreGame();
+    }, 200);
+  };
+
+  overlay.addEventListener('click', closeOverlay);
+  setTimeout(closeOverlay, 1500);
 }
 
 function autoRevealAround(row, col) {
@@ -1661,27 +1963,108 @@ function showExploreResult(success) {
   const modal = document.getElementById('resultModal');
   const content = modal.querySelector('.result-content');
 
+  // 计算本关获得的奖励
+  const levelCoins = exploreCoins - exploreStats.levelStartCoins;
+  const levelGems = exploreGems - exploreStats.levelStartGems;
+
+  // 计算星级（基于表现）
+  let stars = 1;
+  if (success) {
+    stars = 1;
+    if (exploreStats.trapsHit === 0) stars++; // 没踩陷阱加一星
+    if (exploreStats.treasuresCollected >= 2) stars++; // 收集2个以上宝物加一星
+  }
+
+  const completedLevel = success ? exploreLevel - 1 : exploreLevel;
+  const modalClass = success ? 'victory-modal' : 'victory-modal defeat-modal';
+  const btnClass = success ? 'victory-btn' : 'victory-btn defeat-btn';
+
   content.innerHTML = `
-    <div class="result-icon">${success ? '🎉' : '😢'}</div>
-    <div class="result-title">${success ? `第${exploreLevel - 1}层通过!` : '探索结束'}</div>
-    <div class="result-rewards">
-      <div class="reward-item">
-        <span class="reward-value">${exploreCoins}</span>
-        <span class="reward-label">金币</span>
+    <div class="${modalClass}">
+      <div class="victory-title">${success ? '🎉 探索成功!' : '💀 探索失败'}</div>
+      <div class="victory-level">第 ${completedLevel} 层${success ? ' 通过' : ''}</div>
+
+      ${success ? `
+        <div class="victory-stars">
+          <span class="victory-star ${stars >= 1 ? '' : 'empty'}">⭐</span>
+          <span class="victory-star ${stars >= 2 ? '' : 'empty'}">⭐</span>
+          <span class="victory-star ${stars >= 3 ? '' : 'empty'}">⭐</span>
+        </div>
+      ` : ''}
+
+      <div class="victory-stats">
+        <div class="stat-item">
+          <div class="stat-value" data-target="${exploreStats.cellsRevealed}">0</div>
+          <div class="stat-label">挖掘格子</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" data-target="${exploreStats.treasuresCollected}">0</div>
+          <div class="stat-label">收集宝物</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" data-target="${exploreStats.trapsHit}">0</div>
+          <div class="stat-label">踩中陷阱</div>
+        </div>
       </div>
-      <div class="reward-item">
-        <span class="reward-value">${exploreGems}</span>
-        <span class="reward-label">宝石</span>
+
+      <div class="victory-rewards">
+        <div class="reward-row">
+          <span>💰</span>
+          <span>+${levelCoins} 金币</span>
+          <span style="color:#888">(总计: ${exploreCoins})</span>
+        </div>
+        ${levelGems > 0 ? `
+          <div class="reward-row">
+            <span>💎</span>
+            <span>+${levelGems} 宝石</span>
+            <span style="color:#888">(总计: ${exploreGems})</span>
+          </div>
+        ` : ''}
+        ${success ? `
+          <div class="reward-row">
+            <span>❤️</span>
+            <span>生命已恢复</span>
+            <span style="color:#888">(${exploreLives}/${exploreMaxLives})</span>
+          </div>
+        ` : ''}
       </div>
-      <div class="reward-item">
-        <span class="reward-value">第${success ? exploreLevel : exploreLevel}层</span>
-        <span class="reward-label">${success ? '下一层' : '最高层'}</span>
-      </div>
+
+      <button class="${btnClass}" onclick="continueExplore(${success})">
+        ${success ? '继续探索 →' : '重新开始'}
+      </button>
     </div>
-    <button class="result-btn" onclick="continueExplore(${success})">${success ? '继续探索' : '重新开始'}</button>
   `;
 
   modal.classList.add('show');
+
+  // 数字动画增长效果
+  setTimeout(() => {
+    const statValues = content.querySelectorAll('.stat-value[data-target]');
+    statValues.forEach(el => {
+      const target = parseInt(el.dataset.target);
+      animateNumber(el, 0, target, 800);
+    });
+  }, 500);
+}
+
+// 数字动画增长
+function animateNumber(element, start, end, duration) {
+  const startTime = performance.now();
+  const animate = (currentTime) => {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // 缓动函数
+    const easeOut = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(start + (end - start) * easeOut);
+    element.textContent = current;
+    if (progress < 1) {
+      element.classList.add('counting');
+      requestAnimationFrame(animate);
+    } else {
+      element.classList.remove('counting');
+    }
+  };
+  requestAnimationFrame(animate);
 }
 
 function showExploreShop() {
