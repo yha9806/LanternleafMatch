@@ -26,6 +26,16 @@ npm run test:watch   # 测试监听模式
 npm run gen:level -- 17  # 生成并预览第 17 关
 ```
 
+### E2E 测试（Playwright MCP）
+```bash
+npm run test:e2e            # 运行 E2E 测试
+npm run test:e2e:update     # 更新截图基准
+npm run test:review         # 多页面审查
+npm run test:review:baseline # 设置审查基准
+```
+
+详细文档见 `docs/E2E_TESTING.md`
+
 ### Cocos Creator 开发
 ```bash
 # 1. 用 Cocos Dashboard 打开项目根目录
@@ -63,13 +73,20 @@ assets/                           # Cocos Creator 资源目录
 │   │   ├── LevelGenerator.ts         # 关卡生成
 │   │   ├── GoalTracker.ts            # 目标进度追踪
 │   │   ├── GameController.ts         # 游戏主控制器
-│   │   └── EnergyManager.ts          # 体力管理
+│   │   ├── EnergyManager.ts          # 体力管理
+│   │   ├── SceneManager.ts           # 场景管理器
+│   │   ├── PlayerProgress.ts         # 玩家进度管理
+│   │   ├── SettingsManager.ts        # 设置管理
+│   │   └── GameState.ts              # 全局状态管理
 │   ├── game/                     # Cocos 游戏组件
 │   │   ├── BoardView.ts              # 棋盘渲染 + 触摸交换
 │   │   └── GameManager.ts            # 游戏主管理器
 │   ├── ui/                       # UI 组件
 │   │   ├── HudView.ts                # 顶部 HUD
-│   │   └── ModalManager.ts           # 弹窗管理
+│   │   ├── ModalManager.ts           # 弹窗管理
+│   │   ├── MainMenuView.ts           # 主菜单页面
+│   │   ├── LevelSelectView.ts        # 关卡选择页面
+│   │   └── SettingsView.ts           # 设置页面
 │   └── platform/                 # 小程序平台适配
 │       ├── index.ts                  # 平台模块导出
 │       ├── types.ts                  # 平台接口定义
@@ -193,6 +210,85 @@ moss 苔藓：落子在其上并发生消除即可清理（单层）
 - collect：收集指定数量目标物
 - clear_moss：清除苔藓
 - combo：collect + clear_moss 组合
+
+## 留存系统
+
+### 系统架构
+```
+assets/scripts/
+├── core/
+│   ├── WinStreakManager.ts      # 连胜管理
+│   ├── PreBoosterManager.ts     # 预置道具管理
+│   └── RetentionSystem.ts       # 留存系统集成
+└── minigames/
+    ├── index.ts                  # 模块导出
+    ├── RescueMiniGame.ts         # 救援迷你游戏
+    ├── ColorSortMiniGame.ts      # 颜色排序迷你游戏
+    ├── TreasureHuntMiniGame.ts   # 寻宝迷你游戏
+    └── MiniGameManager.ts        # 迷你游戏调度
+```
+
+### 连胜系统 (WinStreakManager)
+
+| 连胜数 | 奖励 |
+|--------|------|
+| 1 | +50 💰 |
+| 2 | +75 💰 |
+| 3 | +100 💰, +1 💎 |
+| 4 | +125 💰 |
+| 5 | +150 💰, +2 💎, 🚀火箭 |
+| 10 | +500 💰, +5 💎, 🌈超级彩虹 |
+
+**复活选项**：
+- 广告复活：每日 3 次
+- 宝石复活：30 💎
+
+### 预置道具 (PreBoosterManager)
+
+| 道具 | 价格 | 解锁等级 | 效果 |
+|------|------|----------|------|
+| 🚀 火箭 | 50 💰 | 1 | 清除一行 |
+| 💣 炸弹 | 80 💰 | 5 | 清除 3×3 |
+| 🌈 彩虹 | 120 💰 | 10 | 清除同色 |
+| 🔀 洗牌 | 30 💰 | 1 | 重排棋盘 |
+| 🔨 锤子 | 60 💰 | 8 | 消除一个 |
+| ⚡ 闪电 | 100 💰 | 15 | 清除一列 |
+
+### 迷你游戏
+
+| 游戏 | 触发条件 | 时限 | 奖励 |
+|------|----------|------|------|
+| 🐱 救援行动 | 关卡完成/连胜里程碑 | 10秒 | 100 💰 + 道具 |
+| 🎨 颜色排序 | 关卡完成/连胜里程碑 | 12秒 | 70-100 💰 |
+| 🗺️ 寻宝挖掘 | 关卡完成/连胜里程碑 | - | 20-200 💰 |
+
+**触发规则**：
+- 每 5 关有 30% 概率触发
+- 5 连胜必触发
+- 冷却时间 30 分钟
+
+### 使用示例
+
+```typescript
+import { getRetentionSystem } from './core/RetentionSystem';
+
+const retention = getRetentionSystem();
+
+// 关卡开始前
+const { availableBoosters, freeBoosters } = retention.onLevelStart(levelIndex);
+
+// 关卡通关
+const { streakReward, shouldTriggerMiniGame, miniGameType } = retention.onLevelWin(levelIndex);
+
+// 关卡失败
+const { streakLost, revivalOptions } = retention.onLevelFail(levelIndex);
+
+// 复活连胜
+retention.reviveStreakWithAd();
+```
+
+### 配置文件
+`assets/resources/configs/retention-config.json` - 所有留存系统参数
 
 ## UI 结构（竖屏 1080×1920）
 
