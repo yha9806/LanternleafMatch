@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>灯笼叶子消消乐 - 每日奖励</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #2d5a27 0%, #1a3518 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+    }
+    .container {
+      width: 100%;
+      max-width: 540px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 10px 0;
+    }
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #FFD700;
+    }
+    .streak-info {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      margin: 20px 0;
+    }
+    .streak-number {
+      font-size: 48px;
+      font-weight: bold;
+      color: #FFD700;
+    }
+    .streak-label {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+    .rewards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 15px 0;
+    }
+    .reward-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .reward-day.claimed {
+      background: rgba(76,175,80,0.3);
+      border-color: #4CAF50;
+    }
+    .reward-day.current {
+      background: rgba(255,215,0,0.2);
+      border-color: #FFD700;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .reward-day.locked {
+      opacity: 0.5;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .reward-day .day-num {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-bottom: 5px;
+    }
+    .reward-day .icon {
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+    .reward-day .amount {
+      font-size: 12px;
+      color: #FFD700;
+      font-weight: bold;
+    }
+    .reward-day .check {
+      color: #4CAF50;
+      font-size: 16px;
+    }
+    .day7-special {
+      grid-column: span 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.2));
+      border: 2px solid #FFD700;
+      border-radius: 16px;
+      margin-top: 10px;
+    }
+    .day7-special.claimed {
+      background: rgba(76,175,80,0.3);
+      border-color: #4CAF50;
+    }
+    .day7-special .rewards {
+      display: flex;
+      gap: 15px;
+    }
+    .day7-special .reward-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .claim-btn {
+      width: 100%;
+      padding: 18px;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 30px;
+      transition: all 0.2s;
+    }
+    .claim-btn.active {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #333;
+      box-shadow: 0 6px 20px rgba(255,215,0,0.4);
+    }
+    .claim-btn.claimed {
+      background: #4CAF50;
+      color: #fff;
+    }
+    .claim-btn:disabled {
+      background: rgba(255,255,255,0.2);
+      color: rgba(255,255,255,0.5);
+      cursor: not-allowed;
+    }
+    .double-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      margin-top: 15px;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      transition: all 0.2s;
+    }
+    .double-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    .double-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
+      padding: 25px 40px;
+      border-radius: 16px;
+      text-align: center;
+      z-index: 100;
+      display: none;
+    }
+    .message.show { display: block; }
+    .message h3 {
+      color: #FFD700;
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+    .message .rewards-display {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin: 15px 0;
+    }
+    .message .reward-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .message .reward-item .icon { font-size: 32px; }
+    .message .reward-item .amount {
+      font-size: 14px;
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .message button {
+      padding: 12px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 25px;
+      background: #FFD700;
+      color: #333;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <h1 class="title">每日奖励</h1>
+    </div>
+
+    <div class="streak-info">
+      <div class="streak-number" id="streakDays">0</div>
+      <div class="streak-label">连续签到天数</div>
+    </div>
+
+    <div class="rewards-grid" id="rewardsGrid">
+      <!-- 动态生成 -->
+    </div>
+
+    <button class="claim-btn active" id="claimBtn" onclick="claimReward()">领取今日奖励</button>
+    <button class="double-btn" id="doubleBtn" onclick="claimDouble()">🎬 看广告双倍奖励</button>
+  </div>
+
+  <div class="message" id="rewardMessage">
+    <h3>恭喜获得!</h3>
+    <div class="rewards-display" id="rewardsDisplay"></div>
+    <button onclick="closeMessage()">太棒了</button>
+  </div>
+
+<script>
+// ============================================
+// 每日签到系统
+// ============================================
+
+// 7天循环奖励配置
+const DAILY_REWARDS = [
+  { day: 1, icon: '💰', name: 'coins', amount: 100 },
+  { day: 2, icon: '💡', name: 'hint', amount: 1 },
+  { day: 3, icon: '💰', name: 'coins', amount: 200 },
+  { day: 4, icon: '🔀', name: 'shuffle', amount: 1 },
+  { day: 5, icon: '💰', name: 'coins', amount: 300 },
+  { day: 6, icon: '🔨', name: 'hammer', amount: 1 },
+  { day: 7, icon: '💎', name: 'gems', amount: 10, bonus: [
+    { icon: '💰', name: 'coins', amount: 500 },
+    { icon: '💡', name: 'hint', amount: 2 }
+  ]}
+];
+
+let dailyState = {
+  streakDays: 0,
+  lastClaimDate: null,
+  todayClaimed: false
+};
+
+function loadDailyState() {
+  try {
+    const saved = localStorage.getItem('lanternleaf_daily_reward');
+    if (saved) {
+      dailyState = JSON.parse(saved);
+    }
+
+    // 检查是否断签
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+    if (dailyState.lastClaimDate === today) {
+      dailyState.todayClaimed = true;
+    } else if (dailyState.lastClaimDate === yesterday) {
+      // 昨天签到了，连续签到继续
+      dailyState.todayClaimed = false;
+    } else if (dailyState.lastClaimDate) {
+      // 断签了，重置连续天数
+      dailyState.streakDays = 0;
+      dailyState.todayClaimed = false;
+    }
+  } catch (e) {
+    console.log('Failed to load daily state:', e);
+  }
+}
+
+function saveDailyState() {
+  try {
+    localStorage.setItem('lanternleaf_daily_reward', JSON.stringify(dailyState));
+  } catch (e) {
+    console.log('Failed to save daily state:', e);
+  }
+}
+
+function renderRewards() {
+  const grid = document.getElementById('rewardsGrid');
+  grid.innerHTML = '';
+
+  // 当前处于7天周期的第几天 (1-7)
+  const currentDayInCycle = (dailyState.streakDays % 7) + 1;
+
+  // 渲染前6天
+  for (let i = 0; i < 6; i++) {
+    const reward = DAILY_REWARDS[i];
+    const dayNum = i + 1;
+
+    let status = 'locked';
+    if (dailyState.todayClaimed && dayNum <= currentDayInCycle) {
+      status = 'claimed';
+    } else if (!dailyState.todayClaimed && dayNum === currentDayInCycle) {
+      status = 'current';
+    } else if (dayNum < currentDayInCycle) {
+      status = 'claimed';
+    }
+
+    const div = document.createElement('div');
+    div.className = `reward-day ${status}`;
+    div.innerHTML = `
+      <span class="day-num">第${dayNum}天</span>
+      <span class="icon">${reward.icon}</span>
+      <span class="amount">${status === 'claimed' ? '<span class="check">✓</span>' : '+' + reward.amount}</span>
+    `;
+    grid.appendChild(div);
+  }
+
+  // 渲染第7天（特殊大奖）
+  const day7 = DAILY_REWARDS[6];
+  let day7Status = 'locked';
+  if (dailyState.todayClaimed && currentDayInCycle === 7) {
+    day7Status = 'claimed';
+  } else if (!dailyState.todayClaimed && currentDayInCycle === 7) {
+    day7Status = 'current';
+  } else if (dailyState.streakDays >= 7) {
+    day7Status = 'claimed';
+  }
+
+  const day7Div = document.createElement('div');
+  day7Div.className = `day7-special ${day7Status}`;
+  day7Div.innerHTML = `
+    <span class="day-num" style="font-size:16px;">第7天大奖</span>
+    <div class="rewards">
+      <div class="reward-item">
+        <span class="icon">${day7.icon}</span>
+        <span class="amount">+${day7.amount}</span>
+      </div>
+      ${day7.bonus.map(b => `
+        <div class="reward-item">
+          <span class="icon">${b.icon}</span>
+          <span class="amount">+${b.amount}</span>
+        </div>
+      `).join('')}
+    </div>
+    ${day7Status === 'claimed' ? '<span class="check" style="font-size:24px;">✓</span>' : ''}
+  `;
+  grid.appendChild(day7Div);
+
+  // 更新连续天数显示
+  document.getElementById('streakDays').textContent = dailyState.streakDays;
+
+  // 更新按钮状态
+  const claimBtn = document.getElementById('claimBtn');
+  const doubleBtn = document.getElementById('doubleBtn');
+
+  if (dailyState.todayClaimed) {
+    claimBtn.textContent = '今日已领取';
+    claimBtn.className = 'claim-btn claimed';
+    claimBtn.disabled = true;
+    doubleBtn.disabled = true;
+  } else {
+    claimBtn.textContent = '领取今日奖励';
+    claimBtn.className = 'claim-btn active';
+    claimBtn.disabled = false;
+    doubleBtn.disabled = false;
+  }
+}
+
+function claimReward(isDouble = false) {
+  if (dailyState.todayClaimed) return;
+
+  const currentDayInCycle = (dailyState.streakDays % 7);
+  const reward = DAILY_REWARDS[currentDayInCycle];
+
+  // 计算奖励
+  const rewards = {};
+  const multiplier = isDouble ? 2 : 1;
+
+  rewards[reward.name] = reward.amount * multiplier;
+
+  // 第7天额外奖励
+  if (currentDayInCycle === 6 && reward.bonus) {
+    for (const bonus of reward.bonus) {
+      rewards[bonus.name] = (rewards[bonus.name] || 0) + bonus.amount * multiplier;
+    }
+  }
+
+  // 发放奖励
+  grantRewards(rewards);
+
+  // 更新状态
+  dailyState.streakDays++;
+  dailyState.lastClaimDate = new Date().toDateString();
+  dailyState.todayClaimed = true;
+  saveDailyState();
+
+  // 显示奖励弹窗
+  showRewardMessage(rewards, isDouble);
+
+  // 重新渲染
+  renderRewards();
+}
+
+function claimDouble() {
+  if (dailyState.todayClaimed) return;
+
+  // 模拟广告
+  const doubleBtn = document.getElementById('doubleBtn');
+  doubleBtn.textContent = '播放中...';
+  doubleBtn.disabled = true;
+
+  setTimeout(() => {
+    claimReward(true);
+  }, 2000);
+}
+
+function grantRewards(rewards) {
+  try {
+    // 加载玩家数据
+    const saved = localStorage.getItem('lanternleaf_player_progress');
+    let progress = saved ? JSON.parse(saved) : {};
+
+    // 添加金币/宝石
+    if (rewards.coins) {
+      progress.coins = (progress.coins || 0) + rewards.coins;
+    }
+    if (rewards.gems) {
+      progress.gems = (progress.gems || 0) + rewards.gems;
+    }
+
+    localStorage.setItem('lanternleaf_player_progress', JSON.stringify(progress));
+
+    // 添加道具
+    const invSaved = localStorage.getItem('lanternleaf_inventory');
+    let inventory = invSaved ? JSON.parse(invSaved) : { hint: 3, shuffle: 2, hammer: 1, row_clear: 0, col_clear: 0, bomb: 0 };
+
+    if (rewards.hint) inventory.hint = (inventory.hint || 0) + rewards.hint;
+    if (rewards.shuffle) inventory.shuffle = (inventory.shuffle || 0) + rewards.shuffle;
+    if (rewards.hammer) inventory.hammer = (inventory.hammer || 0) + rewards.hammer;
+
+    localStorage.setItem('lanternleaf_inventory', JSON.stringify(inventory));
+  } catch (e) {
+    console.log('Failed to grant rewards:', e);
+  }
+}
+
+function showRewardMessage(rewards, isDouble) {
+  const msg = document.getElementById('rewardMessage');
+  const display = document.getElementById('rewardsDisplay');
+
+  const iconMap = {
+    coins: '💰',
+    gems: '💎',
+    hint: '💡',
+    shuffle: '🔀',
+    hammer: '🔨'
+  };
+
+  display.innerHTML = Object.entries(rewards).map(([name, amount]) => `
+    <div class="reward-item">
+      <span class="icon">${iconMap[name] || '🎁'}</span>
+      <span class="amount">+${amount}</span>
+    </div>
+  `).join('');
+
+  msg.querySelector('h3').textContent = isDouble ? '双倍奖励!' : '恭喜获得!';
+  msg.classList.add('show');
+}
+
+function closeMessage() {
+  document.getElementById('rewardMessage').classList.remove('show');
+}
+
+function goBack() {
+  window.location.href = 'menu.html';
+}
+
+// 初始化
+loadDailyState();
+renderRewards();
+</script>
+</body>
+</html>

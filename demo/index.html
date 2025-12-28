@@ -106,6 +106,12 @@
       opacity: 0.8;
       margin-bottom: 20px;
     }
+    .message-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
     .energy-bar {
       display: flex;
       align-items: center;
@@ -189,6 +195,152 @@
       opacity: 0.6;
       margin-top: 8px;
     }
+    /* 道具栏样式 */
+    .item-bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 15px;
+      padding: 10px 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+    }
+    .item-slot {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+    }
+    .item-slot:hover:not(.locked):not(.disabled) {
+      background: rgba(255,255,255,0.25);
+      transform: scale(1.05);
+    }
+    .item-slot:active:not(.locked):not(.disabled) {
+      transform: scale(0.95);
+    }
+    .item-slot.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .item-slot.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .item-slot.active {
+      background: rgba(255,215,0,0.4);
+      box-shadow: 0 0 10px rgba(255,215,0,0.6);
+    }
+    .item-slot.cooldown {
+      opacity: 0.7;
+    }
+    .item-icon {
+      font-size: 22px;
+    }
+    .item-count {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      background: rgba(0,0,0,0.5);
+      padding: 1px 4px;
+      border-radius: 6px;
+    }
+    .item-lock {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 16px;
+    }
+    .item-cooldown {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255,215,0,0.8);
+      border-radius: 0 0 10px 10px;
+      transform-origin: left;
+      transform: scaleX(0);
+    }
+    .item-tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.9);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .item-slot:hover .item-tooltip {
+      opacity: 1;
+    }
+    /* 奖励弹窗 */
+    .reward-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #1a3518, #2d5a27);
+      border: 3px solid #ffd700;
+      border-radius: 16px;
+      padding: 25px 35px;
+      text-align: center;
+      z-index: 150;
+      display: none;
+      animation: popIn 0.3s ease-out;
+    }
+    @keyframes popIn {
+      from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+      to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    .reward-popup h3 {
+      color: #ffd700;
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+    .reward-items {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+    .reward-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .reward-item .icon {
+      font-size: 28px;
+    }
+    .reward-item .amount {
+      font-size: 14px;
+      color: #4CAF50;
+      font-weight: bold;
+    }
+    .reward-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .reward-buttons .btn {
+      flex: 1;
+      max-width: 140px;
+    }
   </style>
 </head>
 <body>
@@ -219,19 +371,68 @@
 
   <canvas id="gameCanvas" width="540" height="540"></canvas>
 
+  <!-- 道具栏 -->
+  <div class="item-bar" id="itemBar">
+    <div class="item-slot" id="item-hint" data-item="hint" title="提示">
+      <span class="item-icon">💡</span>
+      <span class="item-count" id="count-hint">3</span>
+      <div class="item-cooldown" id="cooldown-hint"></div>
+    </div>
+    <div class="item-slot" id="item-shuffle" data-item="shuffle" title="重排">
+      <span class="item-icon">🔀</span>
+      <span class="item-count" id="count-shuffle">2</span>
+      <div class="item-cooldown" id="cooldown-shuffle"></div>
+    </div>
+    <div class="item-slot" id="item-hammer" data-item="hammer" title="锤子">
+      <span class="item-icon">🔨</span>
+      <span class="item-count" id="count-hammer">1</span>
+      <div class="item-cooldown" id="cooldown-hammer"></div>
+    </div>
+    <div class="item-slot locked" id="item-row_clear" data-item="row_clear" title="清行 (15星解锁)">
+      <span class="item-icon">➡️</span>
+      <span class="item-count" id="count-row_clear">0</span>
+      <span class="item-lock">🔒</span>
+      <div class="item-cooldown" id="cooldown-row_clear"></div>
+    </div>
+    <div class="item-slot locked" id="item-col_clear" data-item="col_clear" title="清列 (30星解锁)">
+      <span class="item-icon">⬇️</span>
+      <span class="item-count" id="count-col_clear">0</span>
+      <span class="item-lock">🔒</span>
+      <div class="item-cooldown" id="cooldown-col_clear"></div>
+    </div>
+    <div class="item-slot locked" id="item-bomb" data-item="bomb" title="炸弹 (50星解锁)">
+      <span class="item-icon">💣</span>
+      <span class="item-count" id="count-bomb">0</span>
+      <span class="item-lock">🔒</span>
+      <div class="item-cooldown" id="cooldown-bomb"></div>
+    </div>
+  </div>
+
   <div class="controls">
-    <button class="btn btn-secondary" id="hintBtn">提示</button>
+    <button class="btn btn-secondary" id="backBtn">返回</button>
     <button class="btn btn-primary" id="restartBtn">重新开始</button>
-    <button class="btn btn-secondary" id="nextBtn">下一关</button>
   </div>
 
   <div class="message" id="messageBox">
     <h2 id="msgTitle">恭喜通关!</h2>
     <p id="msgContent">剩余 5 步</p>
-    <button class="btn btn-primary" id="msgBtn">继续</button>
+    <div class="message-buttons">
+      <button class="btn btn-ad" id="msgAdBtn" style="display:none;">🎬 看广告 +3步</button>
+      <button class="btn btn-primary" id="msgBtn">继续</button>
+    </div>
   </div>
 
   <div class="combo-text" id="comboText">连消 x2!</div>
+
+  <!-- 奖励弹窗 -->
+  <div class="reward-popup" id="rewardPopup">
+    <h3 id="rewardTitle">🎁 通关奖励</h3>
+    <div class="reward-items" id="rewardItems"></div>
+    <div class="reward-buttons">
+      <button class="btn btn-ad" id="doubleRewardBtn">🎬 双倍奖励</button>
+      <button class="btn btn-primary" id="rewardCloseBtn">领取</button>
+    </div>
+  </div>
 
   <!-- 体力不足弹窗 -->
   <div class="energy-gate" id="energyGate" style="display:none;">
@@ -270,8 +471,224 @@ const TILE_EMOJIS = {
 const SPECIAL_COLORS = {
   whirl_h: '#FF5722',
   whirl_v: '#FF5722',
-  lantern: '#E91E63'
+  lantern: '#E91E63',
+  rainbow: 'linear-gradient(135deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #9400D3)',
+  wildcard: '#9C27B0',
+  multiplier: '#FFEB3B',
+  frozen: '#00BCD4',
+  bomb_timer: '#F44336'
 };
+
+const SPECIAL_ICONS = {
+  whirl_h: '↔',
+  whirl_v: '↕',
+  lantern: '💥',
+  rainbow: '🌈',
+  wildcard: '🃏',
+  multiplier: '×2',
+  frozen: '❄️',
+  bomb_timer: '💣'
+};
+
+// 特殊块生成配置
+const SPECIAL_GENERATION = {
+  multiplier: { probability: 0.02, minLevel: 11 },
+  wildcard: { probability: 0.01, minLevel: 21 },
+  frozen: { probability: 0.015, minLevel: 16 },
+  bomb_timer: { probability: 0.005, minLevel: 31 }
+};
+
+// 连消奖励配置
+const COMBO_REWARDS = {
+  3: { type: 'multiplier', quantity: 1 },  // 3连消生成倍数块
+  4: { type: 'wildcard', quantity: 1 },    // 4连消生成百搭块
+  5: { type: 'rainbow', quantity: 1 }      // 5连消+生成彩虹块
+};
+
+// 连消视觉效果配置
+const COMBO_STYLES = {
+  2: { size: 'normal', color: '#FFFFFF', animation: 'fadeIn' },
+  3: { size: 'large', color: '#FFFF00', animation: 'pulse' },
+  4: { size: 'larger', color: '#FFA500', animation: 'shake' },
+  5: { size: 'largest', color: '#FF0000', animation: 'flash' }
+};
+
+// 连消统计
+let comboStats = {
+  sessionMax: 0,
+  allTimeMax: 0
+};
+
+function loadComboStats() {
+  try {
+    const saved = localStorage.getItem('lanternleaf_combo_stats');
+    if (saved) {
+      comboStats = JSON.parse(saved);
+    }
+  } catch (e) {
+    console.log('Failed to load combo stats:', e);
+  }
+}
+
+function saveComboStats() {
+  try {
+    localStorage.setItem('lanternleaf_combo_stats', JSON.stringify(comboStats));
+  } catch (e) {
+    console.log('Failed to save combo stats:', e);
+  }
+}
+
+// ==================== 广告系统 ====================
+const AD_CONFIG = {
+  energy: { hourlyLimit: 6, reward: 1 },
+  extraMoves: { perLevelLimit: 1, reward: 3 },
+  hintAd: { dailyLimit: 3, reward: 2 },
+  shuffleAd: { dailyLimit: 3, reward: 1 },
+  doubleReward: { unlimited: true }
+};
+
+let adState = {
+  // 体力广告（每小时重置）
+  energyAdCount: 0,
+  energyAdHourStart: 0,
+  // 续命广告（每关重置）
+  usedContinueThisLevel: false,
+  // 道具广告（每日重置）
+  hintAdCount: 0,
+  shuffleAdCount: 0,
+  dailyResetTime: 0
+};
+
+function loadAdState() {
+  try {
+    const saved = localStorage.getItem('lanternleaf_ad_state');
+    if (saved) {
+      const data = JSON.parse(saved);
+      adState = { ...adState, ...data };
+
+      const now = Date.now();
+
+      // 检查每小时重置
+      if (now - adState.energyAdHourStart > 3600000) {
+        adState.energyAdCount = 0;
+        adState.energyAdHourStart = now;
+      }
+
+      // 检查每日重置
+      const today = new Date().setHours(0, 0, 0, 0);
+      if (adState.dailyResetTime < today) {
+        adState.hintAdCount = 0;
+        adState.shuffleAdCount = 0;
+        adState.dailyResetTime = today;
+      }
+    }
+  } catch (e) {
+    console.log('Failed to load ad state:', e);
+  }
+}
+
+function saveAdState() {
+  try {
+    localStorage.setItem('lanternleaf_ad_state', JSON.stringify(adState));
+  } catch (e) {
+    console.log('Failed to save ad state:', e);
+  }
+}
+
+function resetLevelAdState() {
+  adState.usedContinueThisLevel = false;
+}
+
+// 续命广告
+function canUseContinueAd() {
+  return !adState.usedContinueThisLevel;
+}
+
+function watchContinueAd(callback) {
+  if (!canUseContinueAd()) {
+    showMessage('提示', '本关已使用过续命', () => {});
+    setTimeout(hideMessage, 1200);
+    return;
+  }
+
+  // 模拟广告
+  showMessage('观看广告', '模拟广告播放中...', null);
+  document.getElementById('msgAdBtn').style.display = 'none';
+
+  setTimeout(() => {
+    adState.usedContinueThisLevel = true;
+    saveAdState();
+    hideMessage();
+
+    // 给予额外步数
+    gameState.moves += AD_CONFIG.extraMoves.reward;
+    gameState.isFailed = false;
+    updateHUD();
+    render();
+
+    showMessage('获得续命', `+${AD_CONFIG.extraMoves.reward} 步，继续挑战!`, () => {});
+    setTimeout(hideMessage, 1000);
+
+    if (callback) callback();
+  }, 1500);
+}
+
+// 道具广告
+function canWatchHintAd() {
+  const today = new Date().setHours(0, 0, 0, 0);
+  if (adState.dailyResetTime < today) {
+    adState.hintAdCount = 0;
+    adState.shuffleAdCount = 0;
+    adState.dailyResetTime = today;
+  }
+  return adState.hintAdCount < AD_CONFIG.hintAd.dailyLimit;
+}
+
+function canWatchShuffleAd() {
+  const today = new Date().setHours(0, 0, 0, 0);
+  if (adState.dailyResetTime < today) {
+    adState.hintAdCount = 0;
+    adState.shuffleAdCount = 0;
+    adState.dailyResetTime = today;
+  }
+  return adState.shuffleAdCount < AD_CONFIG.shuffleAd.dailyLimit;
+}
+
+function watchHintAd() {
+  if (!canWatchHintAd()) {
+    showMessage('提示', '今日次数已用完', () => {});
+    setTimeout(hideMessage, 1200);
+    return;
+  }
+
+  showMessage('观看广告', '模拟广告播放中...', null);
+  setTimeout(() => {
+    adState.hintAdCount++;
+    saveAdState();
+    addItem('hint', AD_CONFIG.hintAd.reward);
+    hideMessage();
+    showMessage('获得道具', `+${AD_CONFIG.hintAd.reward} 提示`, () => {});
+    setTimeout(hideMessage, 1000);
+  }, 1500);
+}
+
+function watchShuffleAd() {
+  if (!canWatchShuffleAd()) {
+    showMessage('提示', '今日次数已用完', () => {});
+    setTimeout(hideMessage, 1200);
+    return;
+  }
+
+  showMessage('观看广告', '模拟广告播放中...', null);
+  setTimeout(() => {
+    adState.shuffleAdCount++;
+    saveAdState();
+    addItem('shuffle', AD_CONFIG.shuffleAd.reward);
+    hideMessage();
+    showMessage('获得道具', `+${AD_CONFIG.shuffleAd.reward} 重排`, () => {});
+    setTimeout(hideMessage, 1000);
+  }, 1500);
+}
 
 const BOARD_SIZE = 6;
 const CELL_SIZE = 80;
@@ -504,6 +921,56 @@ const ENERGY_CONFIG = {
   newbieProtection: 10    // 前10关不扣体力
 };
 
+// --- 道具系统配置 ---
+const ITEM_CONFIG = {
+  types: ['hint', 'shuffle', 'hammer', 'row_clear', 'col_clear', 'bomb'],
+  icons: {
+    hint: '💡', shuffle: '🔀', hammer: '🔨',
+    row_clear: '➡️', col_clear: '⬇️', bomb: '💣'
+  },
+  names: {
+    hint: '提示', shuffle: '重排', hammer: '锤子',
+    row_clear: '清行', col_clear: '清列', bomb: '炸弹'
+  },
+  // 每关使用次数限制 (-1 = 无限制)
+  perLevelLimit: {
+    hint: -1, shuffle: 2, hammer: 3,
+    row_clear: 1, col_clear: 1, bomb: 1
+  },
+  // 冷却时间 (毫秒)
+  cooldown: {
+    hint: 3000, shuffle: 5000, hammer: 0,
+    row_clear: 0, col_clear: 0, bomb: 0
+  },
+  // 解锁星数要求
+  unlockStars: {
+    hint: 0, shuffle: 0, hammer: 0,
+    row_clear: 15, col_clear: 30, bomb: 50
+  },
+  // 默认库存
+  defaultInventory: {
+    hint: 3, shuffle: 2, hammer: 1,
+    row_clear: 0, col_clear: 0, bomb: 0
+  }
+};
+
+// 通关奖励配置
+const REWARD_CONFIG = {
+  levelClear: { hint: 1 },           // 通关奖励
+  threeStarClear: { shuffle: 1 },    // 3星额外奖励
+  bossLevelClear: { hammer: 1 }      // Boss关额外奖励
+};
+
+// 星级里程碑奖励
+const STAR_MILESTONES = [
+  { stars: 15, rewards: { row_clear: 1 }, unlocks: ['row_clear'] },
+  { stars: 30, rewards: { col_clear: 1 }, unlocks: ['col_clear'] },
+  { stars: 50, rewards: { bomb: 1 }, unlocks: ['bomb'] },
+  { stars: 75, rewards: { hint: 3, shuffle: 2 } },
+  { stars: 100, rewards: { hammer: 2, bomb: 1 } },
+  { stars: 150, rewards: { hint: 2, shuffle: 2, hammer: 2, row_clear: 2, col_clear: 2, bomb: 2 } }
+];
+
 // --- 游戏状态 ---
 let gameState = {
   board: [],
@@ -518,6 +985,14 @@ let gameState = {
     adWatchedThisHour: 0,
     adHourStart: Date.now()
   },
+  // 道具系统
+  inventory: { ...ITEM_CONFIG.defaultInventory },
+  itemLevelState: {
+    usageCount: { hint: 0, shuffle: 0, hammer: 0, row_clear: 0, col_clear: 0, bomb: 0 },
+    lastUsedTime: { hint: 0, shuffle: 0, hammer: 0, row_clear: 0, col_clear: 0, bomb: 0 }
+  },
+  claimedMilestones: [],  // 已领取的里程碑星数
+  activeItem: null,       // 当前激活的道具（等待选择目标）
   selectedCell: null,
   isAnimating: false,
   rng: null
@@ -573,6 +1048,593 @@ function saveEnergyState() {
     localStorage.setItem('lanternleaf_level', gameState.level.toString());
   } catch (e) {
     console.log('Failed to save energy state:', e);
+  }
+}
+
+// 玩家进度存储（与 PlayerProgress.ts 格式一致）
+let playerProgress = {
+  currentLevel: 1,
+  levelStars: {},
+  totalStars: 0,
+  completedLevels: 0,
+  lastPlayTime: Date.now(),
+  version: 1
+};
+
+function loadPlayerProgress() {
+  try {
+    const saved = localStorage.getItem('lanternleaf_player_progress');
+    if (saved) {
+      const data = JSON.parse(saved);
+      playerProgress = { ...playerProgress, ...data };
+    }
+  } catch (e) {
+    console.log('Failed to load player progress:', e);
+  }
+}
+
+function savePlayerProgress() {
+  try {
+    playerProgress.lastPlayTime = Date.now();
+    localStorage.setItem('lanternleaf_player_progress', JSON.stringify(playerProgress));
+  } catch (e) {
+    console.log('Failed to save player progress:', e);
+  }
+}
+
+function completeLevel(level, stars) {
+  // 更新星级（只保存更高星级）
+  const currentStars = playerProgress.levelStars[level] || 0;
+  if (stars > currentStars) {
+    playerProgress.totalStars += (stars - currentStars);
+    playerProgress.levelStars[level] = stars;
+  }
+
+  // 更新已通关数
+  if (!playerProgress.levelStars[level] || currentStars === 0) {
+    playerProgress.completedLevels++;
+  }
+
+  // 解锁下一关
+  if (level >= playerProgress.currentLevel && level < 50) {
+    playerProgress.currentLevel = level + 1;
+  }
+
+  savePlayerProgress();
+}
+
+// ==================== 道具系统函数 ====================
+
+const INVENTORY_STORAGE_KEY = 'lanternleaf_inventory';
+const MILESTONES_STORAGE_KEY = 'lanternleaf_claimed_milestones';
+
+function loadInventory() {
+  try {
+    const saved = localStorage.getItem(INVENTORY_STORAGE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      gameState.inventory = { ...ITEM_CONFIG.defaultInventory, ...data };
+    }
+    const milestones = localStorage.getItem(MILESTONES_STORAGE_KEY);
+    if (milestones) {
+      gameState.claimedMilestones = JSON.parse(milestones);
+    }
+  } catch (e) {
+    console.log('Failed to load inventory:', e);
+  }
+}
+
+function saveInventory() {
+  try {
+    localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(gameState.inventory));
+    localStorage.setItem(MILESTONES_STORAGE_KEY, JSON.stringify(gameState.claimedMilestones));
+  } catch (e) {
+    console.log('Failed to save inventory:', e);
+  }
+}
+
+function resetLevelItemState() {
+  gameState.itemLevelState = {
+    usageCount: { hint: 0, shuffle: 0, hammer: 0, row_clear: 0, col_clear: 0, bomb: 0 },
+    lastUsedTime: { hint: 0, shuffle: 0, hammer: 0, row_clear: 0, col_clear: 0, bomb: 0 }
+  };
+  gameState.activeItem = null;
+}
+
+function isItemUnlocked(itemType) {
+  const requirement = ITEM_CONFIG.unlockStars[itemType];
+  return playerProgress.totalStars >= requirement;
+}
+
+function canUseItem(itemType) {
+  // 检查是否解锁
+  if (!isItemUnlocked(itemType)) {
+    return { canUse: false, reason: `需要 ${ITEM_CONFIG.unlockStars[itemType]} 星解锁` };
+  }
+  // 检查库存
+  if (gameState.inventory[itemType] <= 0) {
+    return { canUse: false, reason: '道具数量不足' };
+  }
+  // 检查每关使用次数
+  const limit = ITEM_CONFIG.perLevelLimit[itemType];
+  if (limit > 0 && gameState.itemLevelState.usageCount[itemType] >= limit) {
+    return { canUse: false, reason: `本关已使用 ${limit} 次` };
+  }
+  // 检查冷却时间
+  const cooldown = ITEM_CONFIG.cooldown[itemType];
+  if (cooldown > 0) {
+    const lastUsed = gameState.itemLevelState.lastUsedTime[itemType] || 0;
+    const elapsed = Date.now() - lastUsed;
+    if (elapsed < cooldown) {
+      const remaining = Math.ceil((cooldown - elapsed) / 1000);
+      return { canUse: false, reason: `冷却中 ${remaining}秒` };
+    }
+  }
+  return { canUse: true };
+}
+
+function consumeItem(itemType) {
+  if (gameState.inventory[itemType] <= 0) return false;
+  gameState.inventory[itemType]--;
+  gameState.itemLevelState.usageCount[itemType]++;
+  gameState.itemLevelState.lastUsedTime[itemType] = Date.now();
+  saveInventory();
+  updateItemBar();
+  return true;
+}
+
+function addItem(itemType, count = 1) {
+  gameState.inventory[itemType] = (gameState.inventory[itemType] || 0) + count;
+  saveInventory();
+  updateItemBar();
+}
+
+function addItems(items) {
+  for (const [type, count] of Object.entries(items)) {
+    if (count > 0) {
+      gameState.inventory[type] = (gameState.inventory[type] || 0) + count;
+    }
+  }
+  saveInventory();
+  updateItemBar();
+}
+
+// 通关奖励
+function grantLevelClearReward(stars, isBossLevel) {
+  const rewards = { ...REWARD_CONFIG.levelClear };
+
+  if (stars >= 3) {
+    for (const [item, count] of Object.entries(REWARD_CONFIG.threeStarClear)) {
+      rewards[item] = (rewards[item] || 0) + count;
+    }
+  }
+
+  if (isBossLevel) {
+    for (const [item, count] of Object.entries(REWARD_CONFIG.bossLevelClear)) {
+      rewards[item] = (rewards[item] || 0) + count;
+    }
+  }
+
+  addItems(rewards);
+  return rewards;
+}
+
+// 检查并发放里程碑奖励
+function checkAndGrantMilestoneRewards() {
+  const grantedMilestones = [];
+
+  for (const milestone of STAR_MILESTONES) {
+    if (playerProgress.totalStars >= milestone.stars &&
+        !gameState.claimedMilestones.includes(milestone.stars)) {
+      gameState.claimedMilestones.push(milestone.stars);
+      addItems(milestone.rewards);
+      grantedMilestones.push(milestone);
+    }
+  }
+
+  if (grantedMilestones.length > 0) {
+    saveInventory();
+  }
+
+  return grantedMilestones;
+}
+
+// 当前奖励（用于双倍奖励）
+let pendingRewards = null;
+let pendingRewardCallback = null;
+
+// 显示奖励弹窗
+function showRewardPopup(title, rewards, onClose = null) {
+  const popup = document.getElementById('rewardPopup');
+  const titleEl = document.getElementById('rewardTitle');
+  const itemsEl = document.getElementById('rewardItems');
+  const doubleBtn = document.getElementById('doubleRewardBtn');
+
+  titleEl.textContent = title;
+  itemsEl.innerHTML = '';
+
+  // 存储待领取奖励
+  pendingRewards = { ...rewards };
+  pendingRewardCallback = onClose;
+
+  // 显示双倍奖励按钮
+  doubleBtn.style.display = 'inline-block';
+
+  for (const [item, count] of Object.entries(rewards)) {
+    if (count > 0) {
+      const div = document.createElement('div');
+      div.className = 'reward-item';
+      div.innerHTML = `
+        <span class="icon">${ITEM_CONFIG.icons[item]}</span>
+        <span class="amount">+${count}</span>
+      `;
+      itemsEl.appendChild(div);
+    }
+  }
+
+  popup.style.display = 'block';
+}
+
+function hideRewardPopup() {
+  document.getElementById('rewardPopup').style.display = 'none';
+  pendingRewards = null;
+  pendingRewardCallback = null;
+}
+
+// 双倍奖励
+function watchDoubleRewardAd(callback) {
+  console.log('[Ad] 播放双倍奖励广告...');
+
+  // 模拟广告播放
+  setTimeout(() => {
+    console.log('[Ad] 双倍奖励广告播放完成');
+
+    if (pendingRewards) {
+      // 发放额外奖励（双倍 = 再发一次）
+      for (const [item, count] of Object.entries(pendingRewards)) {
+        if (count > 0) {
+          addItem(item, count);
+        }
+      }
+      saveInventory();
+      updateItemBar();
+    }
+
+    if (callback) callback();
+  }, 2500);
+}
+
+// 更新道具栏 UI
+function updateItemBar() {
+  for (const itemType of ITEM_CONFIG.types) {
+    const slot = document.getElementById(`item-${itemType}`);
+    const countEl = document.getElementById(`count-${itemType}`);
+    const cooldownEl = document.getElementById(`cooldown-${itemType}`);
+
+    if (!slot) continue;
+
+    // 更新数量
+    countEl.textContent = gameState.inventory[itemType];
+
+    // 更新锁定状态
+    const unlocked = isItemUnlocked(itemType);
+    slot.classList.toggle('locked', !unlocked);
+    const lockIcon = slot.querySelector('.item-lock');
+    if (lockIcon) {
+      lockIcon.style.display = unlocked ? 'none' : 'block';
+    }
+
+    // 更新禁用状态
+    const { canUse } = canUseItem(itemType);
+    slot.classList.toggle('disabled', !canUse && unlocked);
+
+    // 更新激活状态
+    slot.classList.toggle('active', gameState.activeItem === itemType);
+  }
+}
+
+// 冷却时间动画更新
+let cooldownTimer = null;
+function startCooldownTimer() {
+  if (cooldownTimer) clearInterval(cooldownTimer);
+  cooldownTimer = setInterval(() => {
+    for (const itemType of ITEM_CONFIG.types) {
+      const cooldown = ITEM_CONFIG.cooldown[itemType];
+      if (cooldown <= 0) continue;
+
+      const lastUsed = gameState.itemLevelState.lastUsedTime[itemType] || 0;
+      const elapsed = Date.now() - lastUsed;
+      const remaining = Math.max(0, cooldown - elapsed);
+
+      const cooldownEl = document.getElementById(`cooldown-${itemType}`);
+      const slot = document.getElementById(`item-${itemType}`);
+
+      if (remaining > 0) {
+        const progress = 1 - (remaining / cooldown);
+        cooldownEl.style.transform = `scaleX(${progress})`;
+        slot.classList.add('cooldown');
+      } else {
+        cooldownEl.style.transform = 'scaleX(0)';
+        slot.classList.remove('cooldown');
+      }
+    }
+    updateItemBar();
+  }, 100);
+}
+
+// 道具点击处理
+function handleItemClick(itemType) {
+  if (gameState.isAnimating) return;
+
+  const { canUse, reason } = canUseItem(itemType);
+  if (!canUse) {
+    showMessage('无法使用', reason, () => {});
+    setTimeout(hideMessage, 1200);
+    return;
+  }
+
+  // 立即生效的道具
+  if (itemType === 'hint') {
+    useHintItem();
+  } else if (itemType === 'shuffle') {
+    useShuffleItem();
+  } else {
+    // 需要选择目标的道具
+    if (gameState.activeItem === itemType) {
+      gameState.activeItem = null;  // 取消选择
+    } else {
+      gameState.activeItem = itemType;
+    }
+    updateItemBar();
+  }
+}
+
+// 提示道具
+function useHintItem() {
+  const move = getValidMove();
+  if (!move) {
+    showMessage('提示', '没有可行的移动', () => {});
+    setTimeout(hideMessage, 1000);
+    return;
+  }
+
+  if (!consumeItem('hint')) return;
+
+  // 高亮提示
+  gameState.selectedCell = move.from;
+  render();
+  setTimeout(() => {
+    gameState.selectedCell = move.to;
+    render();
+    setTimeout(() => {
+      gameState.selectedCell = null;
+      render();
+    }, 400);
+  }, 400);
+}
+
+// 重排道具
+function useShuffleItem() {
+  if (!consumeItem('shuffle')) return;
+  shuffleBoard();
+  render();
+}
+
+// 锤子道具（消除单个格子）
+async function useHammerItem(cell) {
+  if (!consumeItem('hammer')) return;
+  gameState.activeItem = null;
+  updateItemBar();
+
+  gameState.isAnimating = true;
+
+  const boardCell = gameState.board[cell.row][cell.col];
+
+  // 处理苔藓
+  if (boardCell.blocker?.type === 'moss') {
+    boardCell.blocker.layer--;
+    if (boardCell.blocker.layer <= 0) {
+      boardCell.blocker = null;
+      if (gameState.goal.type === 'clear_moss') {
+        gameState.goalProgress++;
+      }
+    }
+  }
+
+  // 收集统计
+  if (boardCell.tile && gameState.goal.type === 'collect' && boardCell.tile.type === gameState.goal.item) {
+    gameState.goalProgress++;
+  }
+
+  // 清除格子
+  boardCell.tile = null;
+  render();
+  await sleep(150);
+
+  // 下落填充
+  await animateGravity();
+  await animateFill();
+
+  // 处理连锁消除
+  await resolveMatches();
+
+  updateHUD();
+  checkEndCondition();
+
+  gameState.isAnimating = false;
+}
+
+// 清行道具
+async function useRowClearItem(cell) {
+  if (!consumeItem('row_clear')) return;
+  gameState.activeItem = null;
+  updateItemBar();
+
+  gameState.isAnimating = true;
+
+  const row = cell.row;
+  let mossCleared = 0;
+  let collected = 0;
+
+  for (let c = 0; c < BOARD_SIZE; c++) {
+    const boardCell = gameState.board[row][c];
+
+    if (boardCell.blocker?.type === 'moss') {
+      boardCell.blocker.layer--;
+      if (boardCell.blocker.layer <= 0) {
+        boardCell.blocker = null;
+        mossCleared++;
+      }
+    }
+
+    if (boardCell.tile) {
+      if (gameState.goal.type === 'collect' && boardCell.tile.type === gameState.goal.item) {
+        collected++;
+      }
+      boardCell.tile = null;
+    }
+  }
+
+  if (gameState.goal.type === 'clear_moss') {
+    gameState.goalProgress += mossCleared;
+  } else {
+    gameState.goalProgress += collected;
+  }
+
+  render();
+  await sleep(150);
+  await animateGravity();
+  await animateFill();
+  await resolveMatches();
+
+  updateHUD();
+  checkEndCondition();
+
+  gameState.isAnimating = false;
+}
+
+// 清列道具
+async function useColClearItem(cell) {
+  if (!consumeItem('col_clear')) return;
+  gameState.activeItem = null;
+  updateItemBar();
+
+  gameState.isAnimating = true;
+
+  const col = cell.col;
+  let mossCleared = 0;
+  let collected = 0;
+
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    const boardCell = gameState.board[r][col];
+
+    if (boardCell.blocker?.type === 'moss') {
+      boardCell.blocker.layer--;
+      if (boardCell.blocker.layer <= 0) {
+        boardCell.blocker = null;
+        mossCleared++;
+      }
+    }
+
+    if (boardCell.tile) {
+      if (gameState.goal.type === 'collect' && boardCell.tile.type === gameState.goal.item) {
+        collected++;
+      }
+      boardCell.tile = null;
+    }
+  }
+
+  if (gameState.goal.type === 'clear_moss') {
+    gameState.goalProgress += mossCleared;
+  } else {
+    gameState.goalProgress += collected;
+  }
+
+  render();
+  await sleep(150);
+  await animateGravity();
+  await animateFill();
+  await resolveMatches();
+
+  updateHUD();
+  checkEndCondition();
+
+  gameState.isAnimating = false;
+}
+
+// 炸弹道具 (3x3)
+async function useBombItem(cell) {
+  if (!consumeItem('bomb')) return;
+  gameState.activeItem = null;
+  updateItemBar();
+
+  gameState.isAnimating = true;
+
+  let mossCleared = 0;
+  let collected = 0;
+
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      const r = cell.row + dr;
+      const c = cell.col + dc;
+      if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) continue;
+
+      const boardCell = gameState.board[r][c];
+
+      if (boardCell.blocker?.type === 'moss') {
+        boardCell.blocker.layer--;
+        if (boardCell.blocker.layer <= 0) {
+          boardCell.blocker = null;
+          mossCleared++;
+        }
+      }
+
+      if (boardCell.tile) {
+        if (gameState.goal.type === 'collect' && boardCell.tile.type === gameState.goal.item) {
+          collected++;
+        }
+        boardCell.tile = null;
+      }
+    }
+  }
+
+  if (gameState.goal.type === 'clear_moss') {
+    gameState.goalProgress += mossCleared;
+  } else {
+    gameState.goalProgress += collected;
+  }
+
+  render();
+  await sleep(150);
+  await animateGravity();
+  await animateFill();
+  await resolveMatches();
+
+  updateHUD();
+  checkEndCondition();
+
+  gameState.isAnimating = false;
+}
+
+// 处理道具目标选择
+function handleItemTargetSelect(cell) {
+  if (!gameState.activeItem) return false;
+
+  switch (gameState.activeItem) {
+    case 'hammer':
+      useHammerItem(cell);
+      return true;
+    case 'row_clear':
+      useRowClearItem(cell);
+      return true;
+    case 'col_clear':
+      useColClearItem(cell);
+      return true;
+    case 'bomb':
+      useBombItem(cell);
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -744,6 +1806,13 @@ function initGame(levelIndex) {
   gameState.isAnimating = false;
   gameState.rng = new RNG(Date.now() + levelIndex * 1000);
 
+  // 重置道具关卡状态
+  resetLevelItemState();
+  updateItemBar();
+
+  // 重置广告关卡状态
+  resetLevelAdState();
+
   // 设置目标
   if (config.goal === 'collect') {
     gameState.goal = { type: 'collect', item: config.item, count: config.count };
@@ -804,7 +1873,8 @@ function removeInitialMatches() {
 
 // --- 匹配检测 ---
 function findAllMatches() {
-  const matches = [];
+  const horizontalMatches = [];
+  const verticalMatches = [];
 
   // 水平
   for (let r = 0; r < BOARD_SIZE; r++) {
@@ -812,15 +1882,26 @@ function findAllMatches() {
     while (c < BOARD_SIZE) {
       const tile = gameState.board[r][c].tile;
       if (!tile) { c++; continue; }
-      const type = tile.type;
+      // 检查百搭块或普通匹配
+      const type = tile.isWildcard ? null : tile.type;
       let len = 1;
-      while (c + len < BOARD_SIZE && gameState.board[r][c + len].tile?.type === type) {
-        len++;
+      while (c + len < BOARD_SIZE) {
+        const nextTile = gameState.board[r][c + len].tile;
+        if (!nextTile) break;
+        // 百搭块可以与任意颜色匹配
+        if (nextTile.isWildcard || tile.isWildcard || nextTile.type === type) {
+          len++;
+        } else {
+          break;
+        }
       }
       if (len >= 3) {
         const cells = [];
+        const actualType = tile.isWildcard
+          ? gameState.board[r][c + 1]?.tile?.type || 'leaf'
+          : type;
         for (let i = 0; i < len; i++) cells.push({row: r, col: c + i});
-        matches.push({ cells, type, length: len, isHorizontal: true });
+        horizontalMatches.push({ cells, type: actualType, length: len, isHorizontal: true, shape: 'linear' });
       }
       c += len;
     }
@@ -832,21 +1913,73 @@ function findAllMatches() {
     while (r < BOARD_SIZE) {
       const tile = gameState.board[r][c].tile;
       if (!tile) { r++; continue; }
-      const type = tile.type;
+      const type = tile.isWildcard ? null : tile.type;
       let len = 1;
-      while (r + len < BOARD_SIZE && gameState.board[r + len][c].tile?.type === type) {
-        len++;
+      while (r + len < BOARD_SIZE) {
+        const nextTile = gameState.board[r + len][c].tile;
+        if (!nextTile) break;
+        if (nextTile.isWildcard || tile.isWildcard || nextTile.type === type) {
+          len++;
+        } else {
+          break;
+        }
       }
       if (len >= 3) {
         const cells = [];
+        const actualType = tile.isWildcard
+          ? gameState.board[r + 1]?.[c]?.tile?.type || 'leaf'
+          : type;
         for (let i = 0; i < len; i++) cells.push({row: r + i, col: c});
-        matches.push({ cells, type, length: len, isHorizontal: false });
+        verticalMatches.push({ cells, type: actualType, length: len, isHorizontal: false, shape: 'linear' });
       }
       r += len;
     }
   }
 
-  return matches;
+  // 检测 T型 和 L型
+  const allMatches = [...horizontalMatches, ...verticalMatches];
+  detectTLShapes(horizontalMatches, verticalMatches, allMatches);
+
+  return allMatches;
+}
+
+// 检测 T型 和 L型 匹配
+function detectTLShapes(horizontalMatches, verticalMatches, allMatches) {
+  for (const hMatch of horizontalMatches) {
+    for (const vMatch of verticalMatches) {
+      if (hMatch.type !== vMatch.type) continue;
+
+      // 查找交叉点
+      for (const hCell of hMatch.cells) {
+        for (const vCell of vMatch.cells) {
+          if (hCell.row === vCell.row && hCell.col === vCell.col) {
+            // 找到交叉点
+            const isCorner = isCornerIntersection(hMatch, vMatch, hCell);
+            const shape = isCorner ? 'L' : 'T';
+
+            // 标记这两个匹配
+            hMatch.shape = shape;
+            vMatch.shape = shape;
+            hMatch.intersectionCell = hCell;
+            vMatch.intersectionCell = hCell;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 检查是否为角落交叉（L型）
+function isCornerIntersection(hMatch, vMatch, intersection) {
+  const hCells = hMatch.cells;
+  const vCells = vMatch.cells;
+
+  // 检查是否是水平匹配的端点
+  const isHEnd = (intersection.col === hCells[0].col || intersection.col === hCells[hCells.length - 1].col);
+  // 检查是否是垂直匹配的端点
+  const isVEnd = (intersection.row === vCells[0].row || intersection.row === vCells[vCells.length - 1].row);
+
+  return isHEnd && isVEnd;
 }
 
 function wouldSwapMatch(from, to) {
@@ -930,15 +2063,16 @@ function shuffleBoard() {
 }
 
 // --- 特殊块触发效果 ---
-function triggerSpecialTile(cell, clearedCells, totalCollected, triggeredSpecials) {
+function triggerSpecialTile(cell, clearedCells, totalCollected, triggeredSpecials, targetType = null) {
   const tile = gameState.board[cell.row][cell.col].tile;
-  if (!tile?.isSpecial) return { collected: {}, mossCleared: 0 };
+  if (!tile?.isSpecial) return { collected: {}, mossCleared: 0, multiplier: 1 };
 
   const key = `${cell.row},${cell.col}`;
-  if (triggeredSpecials.has(key)) return { collected: {}, mossCleared: 0 };
+  if (triggeredSpecials.has(key)) return { collected: {}, mossCleared: 0, multiplier: 1 };
   triggeredSpecials.add(key);
 
   const affectedCells = [];
+  let multiplier = 1;
 
   switch (tile.specialType) {
     case 'whirl_h': // 清除整行
@@ -964,6 +2098,33 @@ function triggerSpecialTile(cell, clearedCells, totalCollected, triggeredSpecial
         }
       }
       break;
+
+    case 'rainbow': // 消除所有同色
+      const colorToRemove = targetType || getRandomTileType();
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const t = gameState.board[r][c].tile;
+          if (t && t.type === colorToRemove) {
+            affectedCells.push({ row: r, col: c });
+          }
+        }
+      }
+      // 也清除彩虹块本身
+      affectedCells.push(cell);
+      break;
+
+    case 'multiplier': // 倍数块，收集时×2
+      multiplier = tile.multiplierValue || 2;
+      affectedCells.push(cell);
+      break;
+
+    case 'wildcard': // 百搭块，正常清除
+      affectedCells.push(cell);
+      break;
+
+    case 'bomb_timer': // 炸弹，正常清除（解除危机）
+      affectedCells.push(cell);
+      break;
   }
 
   let mossCleared = 0;
@@ -977,12 +2138,24 @@ function triggerSpecialTile(cell, clearedCells, totalCollected, triggeredSpecial
 
     const boardCell = gameState.board[c.row][c.col];
 
+    // 处理冰冻块
+    if (boardCell.tile?.specialType === 'frozen' && boardCell.tile.frozenLayers > 0) {
+      boardCell.tile.frozenLayers--;
+      if (boardCell.tile.frozenLayers > 0) {
+        clearedCells.delete(cellKey);  // 还没完全消除
+        continue;
+      }
+    }
+
     // 统计收集
     if (boardCell.tile) {
-      collected[boardCell.tile.type] = (collected[boardCell.tile.type] || 0) + 1;
+      const collectCount = boardCell.tile.specialType === 'multiplier'
+        ? (boardCell.tile.multiplierValue || 2)
+        : 1;
+      collected[boardCell.tile.type] = (collected[boardCell.tile.type] || 0) + collectCount;
 
       // 连锁触发其他特殊块
-      if (boardCell.tile.isSpecial && cellKey !== key) {
+      if (boardCell.tile.isSpecial && cellKey !== key && boardCell.tile.specialType !== 'frozen') {
         const chainResult = triggerSpecialTile(c, clearedCells, totalCollected, triggeredSpecials);
         for (const [t, n] of Object.entries(chainResult.collected)) {
           collected[t] = (collected[t] || 0) + n;
@@ -1004,7 +2177,12 @@ function triggerSpecialTile(cell, clearedCells, totalCollected, triggeredSpecial
     boardCell.tile = null;
   }
 
-  return { collected, mossCleared };
+  return { collected, mossCleared, multiplier };
+}
+
+// 获取随机方块类型
+function getRandomTileType() {
+  return TILE_TYPES[Math.floor(Math.random() * TILE_TYPES.length)];
 }
 
 // --- 消除处理 ---
@@ -1020,20 +2198,46 @@ async function resolveMatches() {
     cascadeCount++;
     if (cascadeCount > 1) {
       showCombo(cascadeCount);
+
+      // 更新连消统计
+      if (cascadeCount > comboStats.sessionMax) {
+        comboStats.sessionMax = cascadeCount;
+      }
+      if (cascadeCount > comboStats.allTimeMax) {
+        comboStats.allTimeMax = cascadeCount;
+        saveComboStats();
+      }
     }
 
     // 处理每个匹配
     const clearedCells = new Set();
     const triggeredSpecials = new Set();
     const specialsToCreate = [];  // 延迟创建特殊块
+    const processedTLIntersections = new Set();  // 已处理的 T/L 交叉点
 
     for (const match of matches) {
       // 收集统计
       totalCollected[match.type] = (totalCollected[match.type] || 0) + match.cells.length;
 
       // 确定特殊块位置
-      const centerIdx = Math.floor(match.cells.length / 2);
-      const centerCell = match.cells[centerIdx];
+      let centerCell;
+      let specialType = null;
+
+      // 检查是否为 T/L 型匹配
+      if ((match.shape === 'T' || match.shape === 'L') && match.intersectionCell) {
+        const intKey = `${match.intersectionCell.row},${match.intersectionCell.col}`;
+        if (!processedTLIntersections.has(intKey)) {
+          processedTLIntersections.add(intKey);
+          centerCell = match.intersectionCell;
+          specialType = 'rainbow';  // T/L 型生成彩虹块
+        }
+      } else if (match.length >= 5) {
+        centerCell = match.cells[Math.floor(match.cells.length / 2)];
+        specialType = 'lantern';
+      } else if (match.length >= 4) {
+        centerCell = match.cells[Math.floor(match.cells.length / 2)];
+        specialType = match.isHorizontal ? 'whirl_h' : 'whirl_v';
+      }
 
       for (let i = 0; i < match.cells.length; i++) {
         const cell = match.cells[i];
@@ -1042,14 +2246,22 @@ async function resolveMatches() {
 
         const boardCell = gameState.board[cell.row][cell.col];
 
+        // 处理冰冻块
+        if (boardCell.tile?.specialType === 'frozen' && boardCell.tile.frozenLayers > 0) {
+          boardCell.tile.frozenLayers--;
+          if (boardCell.tile.frozenLayers > 0) {
+            continue;  // 冰层还没消完
+          }
+        }
+
         // 检查是否是特殊块，触发效果
-        if (boardCell.tile?.isSpecial) {
+        if (boardCell.tile?.isSpecial && boardCell.tile.specialType !== 'frozen') {
           const result = triggerSpecialTile(cell, clearedCells, totalCollected, triggeredSpecials);
           for (const [t, n] of Object.entries(result.collected)) {
             totalCollected[t] = (totalCollected[t] || 0) + n;
           }
           totalMossCleared += result.mossCleared;
-          continue;  // 特殊块已被触发处理
+          continue;
         }
 
         clearedCells.add(key);
@@ -1063,25 +2275,25 @@ async function resolveMatches() {
           }
         }
 
-        // 清除 tile（特殊块位置除外）
-        if (i !== centerIdx || match.length < 4) {
+        // 清除 tile（特殊块生成位置除外）
+        const isCenterForSpecial = centerCell && cell.row === centerCell.row && cell.col === centerCell.col && specialType;
+        if (!isCenterForSpecial) {
           boardCell.tile = null;
         }
       }
 
       // 记录需要生成的特殊块
-      if (match.length >= 4) {
-        let specialType;
-        if (match.length >= 5) {
-          specialType = 'lantern';
-        } else {
-          specialType = match.isHorizontal ? 'whirl_h' : 'whirl_v';
+      if (specialType && centerCell) {
+        const existingIdx = specialsToCreate.findIndex(s =>
+          s.cell.row === centerCell.row && s.cell.col === centerCell.col
+        );
+        if (existingIdx === -1) {
+          specialsToCreate.push({
+            cell: centerCell,
+            type: match.type,
+            specialType
+          });
         }
-        specialsToCreate.push({
-          cell: centerCell,
-          type: match.type,
-          specialType
-        });
       }
     }
 
@@ -1102,6 +2314,15 @@ async function resolveMatches() {
 
     // 填充（带动画）
     await animateFill();
+
+    // 生成连消奖励块
+    if (cascadeCount >= 3) {
+      const rewardPlaced = generateComboReward(cascadeCount);
+      if (rewardPlaced) {
+        render();
+        await sleep(200);
+      }
+    }
   }
 
   // 更新目标进度
@@ -1118,6 +2339,107 @@ async function resolveMatches() {
     shuffleBoard();
     render();
   }
+}
+
+// 生成连消奖励块
+function generateComboReward(comboLevel) {
+  // 确定奖励类型
+  let rewardType;
+  if (comboLevel >= 5) {
+    rewardType = COMBO_REWARDS[5].type;
+  } else if (comboLevel >= 4) {
+    rewardType = COMBO_REWARDS[4].type;
+  } else if (comboLevel >= 3) {
+    rewardType = COMBO_REWARDS[3].type;
+  } else {
+    return false;
+  }
+
+  // 找一个随机空位置放置奖励块
+  const emptyCells = [];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const cell = gameState.board[r][c];
+      if (cell.tile && !cell.tile.isSpecial && !cell.blocker) {
+        emptyCells.push({ row: r, col: c });
+      }
+    }
+  }
+
+  if (emptyCells.length === 0) {
+    return false;
+  }
+
+  // 随机选择一个位置
+  const targetCell = emptyCells[gameState.rng.randInt(0, emptyCells.length - 1)];
+  const tile = gameState.board[targetCell.row][targetCell.col].tile;
+
+  // 将该位置的方块转换为特殊块
+  tile.isSpecial = true;
+  tile.specialType = rewardType;
+
+  if (rewardType === 'multiplier') {
+    tile.multiplierValue = 2;
+  } else if (rewardType === 'wildcard') {
+    tile.isWildcard = true;
+  }
+
+  // 显示奖励提示
+  showComboRewardMessage(comboLevel, rewardType);
+
+  return true;
+}
+
+// 显示连消奖励消息
+function showComboRewardMessage(comboLevel, rewardType) {
+  const messages = {
+    multiplier: '获得 ×2 倍数块!',
+    wildcard: '获得百搭块!',
+    rainbow: '获得彩虹块!'
+  };
+
+  const comboText = document.getElementById('comboText');
+  comboText.innerHTML = `连消 x${comboLevel}!<br><span style="font-size:24px;color:#4CAF50">${messages[rewardType] || ''}</span>`;
+  comboText.style.opacity = 1;
+
+  // 根据连消等级调整样式
+  const style = COMBO_STYLES[Math.min(comboLevel, 5)];
+  comboText.style.color = style.color;
+
+  if (style.size === 'large') {
+    comboText.style.fontSize = '56px';
+  } else if (style.size === 'larger') {
+    comboText.style.fontSize = '64px';
+  } else if (style.size === 'largest') {
+    comboText.style.fontSize = '72px';
+  } else {
+    comboText.style.fontSize = '48px';
+  }
+
+  setTimeout(() => {
+    comboText.style.opacity = 0;
+    comboText.style.fontSize = '48px';
+    comboText.style.color = '#ffd700';
+  }, 1200);
+}
+
+// 更新炸弹倒计时（每次移动后调用）
+function updateBombTimers() {
+  let bombExploded = false;
+
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      const tile = gameState.board[r][c].tile;
+      if (tile?.specialType === 'bomb_timer' && tile.bombTimer !== undefined) {
+        tile.bombTimer--;
+        if (tile.bombTimer <= 0) {
+          bombExploded = true;
+        }
+      }
+    }
+  }
+
+  return bombExploded;
 }
 
 function applyGravity() {
@@ -1139,10 +2461,43 @@ function fillEmpty() {
   for (let c = 0; c < BOARD_SIZE; c++) {
     for (let r = 0; r < BOARD_SIZE; r++) {
       if (gameState.board[r][c].tile === null) {
-        gameState.board[r][c].tile = { type: randomTileType(), isSpecial: false };
+        const tile = generateNewTile();
+        gameState.board[r][c].tile = tile;
       }
     }
   }
+}
+
+// 生成新方块（可能是特殊方块）
+function generateNewTile() {
+  const type = randomTileType();
+  const tile = { type, isSpecial: false };
+
+  // 根据关卡检查是否生成特殊块
+  const level = gameState.level;
+
+  // 检查每种特殊块
+  for (const [specialType, config] of Object.entries(SPECIAL_GENERATION)) {
+    if (level >= config.minLevel && gameState.rng.random() < config.probability) {
+      tile.isSpecial = true;
+      tile.specialType = specialType;
+
+      // 设置特殊属性
+      if (specialType === 'frozen') {
+        tile.frozenLayers = 2;
+      } else if (specialType === 'multiplier') {
+        tile.multiplierValue = 2;
+      } else if (specialType === 'wildcard') {
+        tile.isWildcard = true;
+      } else if (specialType === 'bomb_timer') {
+        tile.bombTimer = gameState.rng.randInt(5, 8);
+      }
+
+      return tile;
+    }
+  }
+
+  return tile;
 }
 
 // --- 简化的坠落动画 ---
@@ -1161,6 +2516,229 @@ async function animateFill() {
   await sleep(80);
 }
 
+// --- 特殊块组合效果 ---
+function isSpecialTile(tile) {
+  return tile?.isSpecial && ['whirl_h', 'whirl_v', 'lantern', 'rainbow'].includes(tile.specialType);
+}
+
+function getSpecialComboType(type1, type2) {
+  const types = [type1, type2].sort();
+
+  // whirl + whirl = 十字清除
+  if ((type1 === 'whirl_h' && type2 === 'whirl_v') || (type1 === 'whirl_v' && type2 === 'whirl_h')) {
+    return 'cross';
+  }
+
+  // whirl + lantern = 3行/3列清除
+  if ((type1.startsWith('whirl') && type2 === 'lantern') || (type1 === 'lantern' && type2.startsWith('whirl'))) {
+    return 'triple_line';
+  }
+
+  // lantern + lantern = 5x5 清除
+  if (type1 === 'lantern' && type2 === 'lantern') {
+    return 'mega_bomb';
+  }
+
+  // rainbow + 特殊块 = 全色变特殊
+  if (type1 === 'rainbow' || type2 === 'rainbow') {
+    const otherType = type1 === 'rainbow' ? type2 : type1;
+    if (otherType !== 'rainbow') {
+      return 'rainbow_special';
+    }
+    // rainbow + rainbow = 全屏清除
+    return 'rainbow_rainbow';
+  }
+
+  return null;
+}
+
+async function triggerSpecialCombo(cell1, cell2, comboType) {
+  const tile1 = gameState.board[cell1.row][cell1.col].tile;
+  const tile2 = gameState.board[cell2.row][cell2.col].tile;
+
+  const clearedCells = new Set();
+  const triggeredSpecials = new Set();
+  let totalCollected = {};
+  let totalMossCleared = 0;
+
+  // 先清除两个特殊块本身
+  clearedCells.add(`${cell1.row},${cell1.col}`);
+  clearedCells.add(`${cell2.row},${cell2.col}`);
+
+  const affectedCells = [];
+
+  switch (comboType) {
+    case 'cross': // 十字清除（整行+整列）
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        affectedCells.push({ row: cell1.row, col: c });
+        affectedCells.push({ row: cell2.row, col: c });
+      }
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        affectedCells.push({ row: r, col: cell1.col });
+        affectedCells.push({ row: r, col: cell2.col });
+      }
+      showComboEffect('十字消除!');
+      break;
+
+    case 'triple_line': // 3行或3列清除
+      const isHorizontal = tile1.specialType === 'whirl_h' || tile2.specialType === 'whirl_h';
+      if (isHorizontal) {
+        // 清除中心行及上下各一行
+        for (let dr = -1; dr <= 1; dr++) {
+          const r = cell1.row + dr;
+          if (r >= 0 && r < BOARD_SIZE) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+              affectedCells.push({ row: r, col: c });
+            }
+          }
+        }
+      } else {
+        // 清除中心列及左右各一列
+        for (let dc = -1; dc <= 1; dc++) {
+          const c = cell1.col + dc;
+          if (c >= 0 && c < BOARD_SIZE) {
+            for (let r = 0; r < BOARD_SIZE; r++) {
+              affectedCells.push({ row: r, col: c });
+            }
+          }
+        }
+      }
+      showComboEffect('三线爆破!');
+      break;
+
+    case 'mega_bomb': // 5x5 范围清除
+      for (let dr = -2; dr <= 2; dr++) {
+        for (let dc = -2; dc <= 2; dc++) {
+          const r = cell1.row + dr;
+          const c = cell1.col + dc;
+          if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+            affectedCells.push({ row: r, col: c });
+          }
+        }
+      }
+      showComboEffect('超级爆破!');
+      break;
+
+    case 'rainbow_special': // 全色变特殊块并触发
+      const otherTile = tile1.specialType === 'rainbow' ? tile2 : tile1;
+      const targetType = getRandomTileType();
+
+      // 找到所有该颜色的格子，变成特殊块并触发
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          const t = gameState.board[r][c].tile;
+          if (t && t.type === targetType && !t.isSpecial) {
+            // 把普通块变成特殊块
+            gameState.board[r][c].tile = {
+              ...t,
+              isSpecial: true,
+              specialType: otherTile.specialType
+            };
+            affectedCells.push({ row: r, col: c });
+          }
+        }
+      }
+      // 也清除彩虹块和另一个特殊块的位置
+      affectedCells.push(cell1);
+      affectedCells.push(cell2);
+      showComboEffect('彩虹爆发!');
+      break;
+
+    case 'rainbow_rainbow': // 全屏清除
+      for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          affectedCells.push({ row: r, col: c });
+        }
+      }
+      showComboEffect('全屏清除!');
+      break;
+  }
+
+  // 清除受影响的格子
+  for (const cell of affectedCells) {
+    const key = `${cell.row},${cell.col}`;
+    if (clearedCells.has(key)) continue;
+    clearedCells.add(key);
+
+    const boardCell = gameState.board[cell.row][cell.col];
+
+    // 处理冰冻块
+    if (boardCell.tile?.specialType === 'frozen' && boardCell.tile.frozenLayers > 0) {
+      boardCell.tile.frozenLayers--;
+      if (boardCell.tile.frozenLayers > 0) {
+        clearedCells.delete(key);
+        continue;
+      }
+    }
+
+    // 统计收集
+    if (boardCell.tile) {
+      const collectCount = boardCell.tile.specialType === 'multiplier'
+        ? (boardCell.tile.multiplierValue || 2)
+        : 1;
+      totalCollected[boardCell.tile.type] = (totalCollected[boardCell.tile.type] || 0) + collectCount;
+
+      // 连锁触发其他特殊块
+      if (boardCell.tile.isSpecial && boardCell.tile.specialType !== 'frozen') {
+        const chainResult = triggerSpecialTile(cell, clearedCells, totalCollected, triggeredSpecials);
+        for (const [t, n] of Object.entries(chainResult.collected)) {
+          totalCollected[t] = (totalCollected[t] || 0) + n;
+        }
+        totalMossCleared += chainResult.mossCleared;
+      }
+    }
+
+    // 处理苔藓
+    if (boardCell.blocker?.type === 'moss') {
+      boardCell.blocker.layer--;
+      if (boardCell.blocker.layer <= 0) {
+        boardCell.blocker = null;
+        totalMossCleared++;
+      }
+    }
+
+    // 清除 tile
+    boardCell.tile = null;
+  }
+
+  // 更新目标进度
+  for (const [type, count] of Object.entries(totalCollected)) {
+    const goal = gameState.goals.find(g => g.type === 'collect' && g.item === type);
+    if (goal) {
+      goal.current = Math.min(goal.count, goal.current + count);
+    }
+  }
+
+  const mossGoal = gameState.goals.find(g => g.type === 'clear_moss');
+  if (mossGoal && totalMossCleared > 0) {
+    mossGoal.current = Math.min(mossGoal.count, mossGoal.current + totalMossCleared);
+  }
+
+  return { collected: totalCollected, mossCleared: totalMossCleared };
+}
+
+function showComboEffect(text) {
+  const comboDiv = document.createElement('div');
+  comboDiv.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #333;
+    font-size: 28px;
+    font-weight: bold;
+    padding: 15px 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(255,215,0,0.6);
+    z-index: 1000;
+    animation: combo-pop 0.8s ease-out forwards;
+  `;
+  comboDiv.textContent = text;
+  document.body.appendChild(comboDiv);
+  setTimeout(() => comboDiv.remove(), 800);
+}
+
 // --- 交换处理 ---
 async function handleSwap(from, to) {
   if (gameState.isAnimating) return;
@@ -1174,7 +2752,48 @@ async function handleSwap(from, to) {
     return;
   }
 
-  // 检查是否有效
+  // 检查是否为特殊块组合
+  const tile1 = gameState.board[from.row][from.col].tile;
+  const tile2 = gameState.board[to.row][to.col].tile;
+
+  if (isSpecialTile(tile1) && isSpecialTile(tile2)) {
+    const comboType = getSpecialComboType(tile1.specialType, tile2.specialType);
+    if (comboType) {
+      // 执行交换动画
+      await animateSwap(from, to);
+
+      // 消耗步数
+      gameState.moves--;
+      updateHUD();
+
+      // 触发特殊组合效果
+      await triggerSpecialCombo(from, to, comboType);
+
+      // 下落填充
+      await animateGravity();
+      await animateFill();
+
+      // 继续处理连锁消除
+      await resolveMatches();
+
+      // 更新炸弹倒计时
+      const bombExploded = updateBombTimers();
+      if (bombExploded) {
+        showMessage('炸弹爆炸!', '定时炸弹引爆了!', () => {
+          tryStartLevel(gameState.level);
+        });
+        gameState.isAnimating = false;
+        return;
+      }
+
+      render();
+      checkEndCondition();
+      gameState.isAnimating = false;
+      return;
+    }
+  }
+
+  // 检查是否有效（普通交换）
   const isValid = wouldSwapMatch(from, to);
 
   // 执行交换动画
@@ -1192,6 +2811,18 @@ async function handleSwap(from, to) {
 
     // 处理消除
     await resolveMatches();
+
+    // 更新炸弹倒计时
+    const bombExploded = updateBombTimers();
+    if (bombExploded) {
+      showMessage('炸弹爆炸!', '定时炸弹引爆了!', () => {
+        tryStartLevel(gameState.level);
+      });
+      gameState.isAnimating = false;
+      return;
+    }
+
+    render();
 
     // 检查胜利/失败
     checkEndCondition();
@@ -1280,9 +2911,38 @@ function render(swapFrom, swapTo, swapProgress) {
       if (cell.tile) {
         const tile = cell.tile;
 
+        // 冰冻效果背景
+        if (tile.specialType === 'frozen' && tile.frozenLayers > 0) {
+          ctx.fillStyle = 'rgba(0, 188, 212, 0.4)';
+          ctx.beginPath();
+          ctx.roundRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4, 8);
+          ctx.fill();
+
+          // 冰层边框
+          ctx.strokeStyle = '#00BCD4';
+          ctx.lineWidth = tile.frozenLayers;
+          ctx.beginPath();
+          ctx.roundRect(x + 2, y + 2, CELL_SIZE - 4, CELL_SIZE - 4, 8);
+          ctx.stroke();
+        }
+
         // 特殊块背景
-        if (tile.isSpecial) {
-          ctx.fillStyle = SPECIAL_COLORS[tile.specialType];
+        if (tile.isSpecial && tile.specialType !== 'frozen') {
+          const color = SPECIAL_COLORS[tile.specialType];
+          if (tile.specialType === 'rainbow') {
+            // 彩虹渐变
+            const gradient = ctx.createLinearGradient(x, y, x + CELL_SIZE, y + CELL_SIZE);
+            gradient.addColorStop(0, '#FF0000');
+            gradient.addColorStop(0.17, '#FF7F00');
+            gradient.addColorStop(0.33, '#FFFF00');
+            gradient.addColorStop(0.5, '#00FF00');
+            gradient.addColorStop(0.67, '#0000FF');
+            gradient.addColorStop(0.83, '#4B0082');
+            gradient.addColorStop(1, '#9400D3');
+            ctx.fillStyle = gradient;
+          } else {
+            ctx.fillStyle = color;
+          }
           ctx.beginPath();
           ctx.arc(x + CELL_SIZE/2, y + CELL_SIZE/2, CELL_SIZE/2 - 4, 0, Math.PI * 2);
           ctx.fill();
@@ -1297,12 +2957,20 @@ function render(swapFrom, swapTo, swapProgress) {
         // 特殊块标识
         if (tile.isSpecial) {
           ctx.font = '16px sans-serif';
-          if (tile.specialType === 'lantern') {
-            ctx.fillText('💥', x + CELL_SIZE - 12, y + 12);
-          } else if (tile.specialType === 'whirl_h') {
-            ctx.fillText('↔', x + CELL_SIZE - 12, y + 12);
-          } else {
-            ctx.fillText('↕', x + CELL_SIZE - 12, y + 12);
+          const icon = SPECIAL_ICONS[tile.specialType];
+
+          if (tile.specialType === 'bomb_timer' && tile.bombTimer !== undefined) {
+            // 炸弹显示倒计时数字
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.fillText(tile.bombTimer.toString(), x + CELL_SIZE - 14, y + 16);
+          } else if (tile.specialType === 'multiplier') {
+            // 倍数块显示倍数
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText(`×${tile.multiplierValue || 2}`, x + CELL_SIZE - 16, y + 14);
+          } else if (icon) {
+            ctx.fillText(icon, x + CELL_SIZE - 12, y + 12);
           }
         }
       }
@@ -1360,7 +3028,24 @@ function checkEndCondition() {
   const isComplete = gameState.goalProgress >= goal.count;
 
   if (isComplete) {
+    // 计算星级
+    let stars = 1;
+    if (gameState.moves >= 5) stars = 3;
+    else if (gameState.moves >= 2) stars = 2;
+
     // 保存进度
+    const currentLevel = gameState.level;
+    const config = getLevelConfig(currentLevel);
+    const isBossLevel = config.isBossLevel || false;
+
+    completeLevel(currentLevel, stars);
+
+    // 发放通关奖励
+    const rewards = grantLevelClearReward(stars, isBossLevel);
+
+    // 检查里程碑奖励
+    const milestones = checkAndGrantMilestoneRewards();
+
     gameState.level++;
     saveEnergyState();
 
@@ -1372,11 +3057,47 @@ function checkEndCondition() {
       newbieHint.style.display = 'none';
     }
 
-    showMessage('恭喜通关!', `剩余 ${gameState.moves} 步`, () => {
-      tryStartLevel(gameState.level);
-    });
+    // 显示奖励弹窗
+    const starsDisplay = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+
+    // 合并所有奖励用于显示
+    const allRewards = { ...rewards };
+    for (const milestone of milestones) {
+      for (const [item, count] of Object.entries(milestone.rewards)) {
+        allRewards[item] = (allRewards[item] || 0) + count;
+      }
+    }
+
+    // 先显示奖励弹窗
+    if (Object.keys(allRewards).length > 0) {
+      const title = milestones.length > 0
+        ? `🎁 通关奖励 + 里程碑 ${starsDisplay}`
+        : `🎁 通关奖励 ${starsDisplay}`;
+      showRewardPopup(title, allRewards);
+
+      // 等待用户关闭奖励弹窗后显示通关消息
+      document.getElementById('rewardCloseBtn').onclick = () => {
+        hideRewardPopup();
+        showMessage(`恭喜通关! ${starsDisplay}`, `剩余 ${gameState.moves} 步`, () => {
+          tryStartLevel(gameState.level);
+        });
+      };
+    } else {
+      showMessage(`恭喜通关! ${starsDisplay}`, `剩余 ${gameState.moves} 步`, () => {
+        tryStartLevel(gameState.level);
+      });
+    }
   } else if (gameState.moves <= 0) {
+    // 检查是否可以看广告续命
+    const adBtn = document.getElementById('msgAdBtn');
+    if (canUseContinueAd()) {
+      adBtn.style.display = 'inline-block';
+      adBtn.textContent = `🎬 看广告 +${AD_CONFIG.extraMoves.reward}步`;
+    } else {
+      adBtn.style.display = 'none';
+    }
     showMessage('挑战失败', '再试一次?', () => {
+      adBtn.style.display = 'none';
       tryStartLevel(gameState.level);
     });
   }
@@ -1392,6 +3113,11 @@ canvas.addEventListener('mousedown', (e) => {
   const y = e.clientY - rect.top;
   const cell = positionToCell(x, y);
   if (cell) {
+    // 检查是否有激活的道具需要选择目标
+    if (gameState.activeItem) {
+      handleItemTargetSelect(cell);
+      return;
+    }
     if (gameState.selectedCell) {
       handleSwap(gameState.selectedCell, cell);
       gameState.selectedCell = null;
@@ -1430,6 +3156,13 @@ canvas.addEventListener('touchend', (e) => {
   const dx = endX - touchStart.x;
   const dy = endY - touchStart.y;
 
+  // 检查是否有激活的道具需要选择目标（点击模式）
+  if (gameState.activeItem && Math.abs(dx) < 20 && Math.abs(dy) < 20) {
+    handleItemTargetSelect(touchStart.cell);
+    touchStart = null;
+    return;
+  }
+
   if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
     let targetCell;
     if (Math.abs(dx) > Math.abs(dy)) {
@@ -1461,30 +3194,55 @@ function positionToCell(x, y) {
 }
 
 // --- 按钮事件 ---
-document.getElementById('hintBtn').addEventListener('click', () => {
-  const move = getValidMove();
-  if (move) {
-    gameState.selectedCell = move.from;
-    render();
-    setTimeout(() => {
-      gameState.selectedCell = move.to;
-      render();
-      setTimeout(() => {
-        gameState.selectedCell = null;
-        render();
-      }, 300);
-    }, 300);
-  }
+
+// 道具栏点击事件
+document.querySelectorAll('.item-slot').forEach(slot => {
+  slot.addEventListener('click', () => {
+    const itemType = slot.dataset.item;
+    if (itemType) {
+      handleItemClick(itemType);
+    }
+  });
+});
+
+// 奖励弹窗关闭按钮
+document.getElementById('rewardCloseBtn').addEventListener('click', () => {
+  const callback = pendingRewardCallback;
+  hideRewardPopup();
+  if (callback) callback();
+});
+
+// 双倍奖励按钮
+document.getElementById('doubleRewardBtn').addEventListener('click', () => {
+  const doubleBtn = document.getElementById('doubleRewardBtn');
+  doubleBtn.textContent = '播放中...';
+  doubleBtn.disabled = true;
+
+  watchDoubleRewardAd(() => {
+    // 更新显示为双倍
+    const itemsEl = document.getElementById('rewardItems');
+    itemsEl.querySelectorAll('.amount').forEach(el => {
+      const amount = parseInt(el.textContent.replace('+', ''));
+      el.textContent = `+${amount * 2}`;
+      el.style.color = '#FFD700';
+    });
+    document.getElementById('rewardTitle').textContent = '🎁 双倍奖励!';
+
+    // 隐藏双倍按钮
+    doubleBtn.style.display = 'none';
+    doubleBtn.textContent = '🎬 双倍奖励';
+    doubleBtn.disabled = false;
+  });
 });
 
 document.getElementById('restartBtn').addEventListener('click', () => {
   tryStartLevel(gameState.level);
 });
 
-document.getElementById('nextBtn').addEventListener('click', () => {
-  gameState.level++;
-  saveEnergyState();
-  tryStartLevel(gameState.level);
+// "下一关"按钮已移除，通关后自动进入下一关
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  window.location.href = 'level-select.html';
 });
 
 // 体力门槛弹窗按钮
@@ -1503,10 +3261,33 @@ document.getElementById('waitBtn').addEventListener('click', () => {
   hideEnergyGate();
 });
 
+// 续命广告按钮
+document.getElementById('msgAdBtn').addEventListener('click', () => {
+  watchContinueAd(() => {
+    // 广告观看成功，关闭失败弹窗，继续游戏
+    document.getElementById('msgOverlay').style.display = 'none';
+    document.getElementById('msgAdBtn').style.display = 'none';
+  });
+});
+
 // --- 启动游戏 ---
 function startup() {
   // 加载存档
   loadEnergyState();
+  loadPlayerProgress();
+  loadInventory();
+  loadComboStats();
+  loadAdState();
+
+  // 检查是否从关卡选择传入了关卡
+  const selectedLevel = sessionStorage.getItem('selectedLevel');
+  if (selectedLevel) {
+    gameState.level = parseInt(selectedLevel);
+    sessionStorage.removeItem('selectedLevel');
+  } else {
+    // 使用进度中的当前关卡
+    gameState.level = playerProgress.currentLevel || gameState.level;
+  }
 
   // 显示新手保护提示
   const newbieHint = document.getElementById('newbieHint');
@@ -1518,6 +3299,12 @@ function startup() {
 
   // 启动体力恢复定时器
   startEnergyTimer();
+
+  // 启动道具冷却时间定时器
+  startCooldownTimer();
+
+  // 更新道具栏显示
+  updateItemBar();
 
   // 开始游戏
   tryStartLevel(gameState.level);

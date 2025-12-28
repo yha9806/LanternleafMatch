@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>灯笼叶子消消乐 - 设置</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #2d5a27 0%, #1a3518 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+    }
+    .container {
+      width: 100%;
+      max-width: 540px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* 顶部栏 */
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(0,0,0,0.2);
+    }
+    .back-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.3); }
+    .header-title {
+      flex: 1;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      margin-right: 44px;
+    }
+    /* 设置列表 */
+    .settings-list {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    /* 设置项 */
+    .setting-item {
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .setting-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .setting-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .setting-icon { font-size: 20px; }
+    .setting-value {
+      font-size: 16px;
+      font-weight: bold;
+      color: #FFD700;
+      min-width: 50px;
+      text-align: right;
+    }
+    /* 滑块 */
+    .slider-container {
+      width: 100%;
+    }
+    .slider {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      outline: none;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+    }
+    .slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(255,215,0,0.4);
+    }
+    /* 开关 */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .toggle {
+      width: 56px;
+      height: 30px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 15px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .toggle.active {
+      background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    }
+    .toggle-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: #fff;
+      border-radius: 50%;
+      transition: left 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .toggle.active .toggle-knob {
+      left: 29px;
+    }
+    .toggle-label {
+      font-size: 14px;
+      color: rgba(255,255,255,0.7);
+    }
+    .toggle.active + .toggle-label {
+      color: #4CAF50;
+    }
+    /* 禁用状态 */
+    .setting-item.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .coming-soon {
+      font-size: 11px;
+      background: rgba(255,255,255,0.2);
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+    }
+    /* 分隔线 */
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      margin: 10px 0;
+    }
+    /* 危险操作区 */
+    .danger-zone {
+      margin-top: auto;
+      padding: 20px;
+    }
+    .danger-title {
+      font-size: 14px;
+      opacity: 0.6;
+      margin-bottom: 12px;
+    }
+    .btn-danger {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid #e74c3c;
+      background: transparent;
+      color: #e74c3c;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-danger:hover {
+      background: #e74c3c;
+      color: #fff;
+    }
+    /* 确认弹窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      background: linear-gradient(135deg, #2d5a27, #1a3518);
+      border-radius: 20px;
+      padding: 30px;
+      width: 90%;
+      max-width: 320px;
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.3s;
+    }
+    .modal-overlay.show .modal {
+      transform: scale(1);
+    }
+    .modal-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .modal-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+    .modal-message {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    .modal-btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .modal-btn:active { transform: scale(0.95); }
+    .modal-btn-cancel {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+    .modal-btn-confirm {
+      background: #e74c3c;
+      color: #fff;
+    }
+    /* 版本信息 */
+    .version-info {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      opacity: 0.5;
+    }
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 顶部栏 -->
+    <div class="header">
+      <a href="menu.html" class="back-btn">←</a>
+      <div class="header-title">设置</div>
+    </div>
+
+    <!-- 设置列表 -->
+    <div class="settings-list">
+      <!-- 背景音乐 -->
+      <div class="setting-item">
+        <div class="setting-header">
+          <div class="setting-label">
+            <span class="setting-icon">🎵</span>
+            <span>背景音乐</span>
+          </div>
+          <div class="setting-value" id="bgmValue">80%</div>
+        </div>
+        <div class="slider-container">
+          <input type="range" class="slider" id="bgmSlider" min="0" max="100" value="80">
+        </div>
+      </div>
+
+      <!-- 音效 -->
+      <div class="setting-item">
+        <div class="setting-header">
+          <div class="setting-label">
+            <span class="setting-icon">🔊</span>
+            <span>游戏音效</span>
+          </div>
+          <div class="setting-value" id="sfxValue">100%</div>
+        </div>
+        <div class="slider-container">
+          <input type="range" class="slider" id="sfxSlider" min="0" max="100" value="100">
+        </div>
+      </div>
+
+      <!-- 震动 -->
+      <div class="setting-item">
+        <div class="toggle-container">
+          <div class="setting-label">
+            <span class="setting-icon">📳</span>
+            <span>震动反馈</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="toggle active" id="vibrationToggle">
+              <div class="toggle-knob"></div>
+            </div>
+            <span class="toggle-label" id="vibrationLabel">ON</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 语言（禁用） -->
+      <div class="setting-item disabled">
+        <div class="toggle-container">
+          <div class="setting-label">
+            <span class="setting-icon">🌐</span>
+            <span>语言</span>
+            <span class="coming-soon">即将推出</span>
+          </div>
+          <div class="setting-value">简体中文</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 账户信息 -->
+      <div class="setting-item">
+        <div class="setting-header">
+          <div class="setting-label">
+            <span class="setting-icon">👤</span>
+            <span>游戏进度</span>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-around; padding: 10px 0;">
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: bold; color: #FFD700;" id="statLevel">1</div>
+            <div style="font-size: 12px; opacity: 0.7;">当前关卡</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: bold; color: #FFD700;" id="statStars">0</div>
+            <div style="font-size: 12px; opacity: 0.7;">总星数</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: bold; color: #FFD700;" id="statCompleted">0</div>
+            <div style="font-size: 12px; opacity: 0.7;">已通关</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 危险操作区 -->
+    <div class="danger-zone">
+      <div class="danger-title">危险操作</div>
+      <button class="btn-danger" id="resetBtn">重置游戏进度</button>
+    </div>
+
+    <div class="version-info">
+      灯笼叶子消消乐 v1.0.0<br>
+      Powered by Cocos Creator
+    </div>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div class="modal-icon">⚠️</div>
+      <div class="modal-title">确认重置？</div>
+      <div class="modal-message">
+        此操作将清除所有游戏进度，包括关卡星级和解锁状态。此操作无法撤销！
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-cancel" id="cancelBtn">取消</button>
+        <button class="modal-btn modal-btn-confirm" id="confirmBtn">确认重置</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+// ============================================
+// 设置页面逻辑
+// ============================================
+
+const STORAGE_KEY = 'lanternleaf_settings';
+const PROGRESS_KEY = 'lanternleaf_player_progress';
+
+let settings = {
+  bgmVolume: 0.8,
+  sfxVolume: 1.0,
+  vibration: true,
+  language: 'zh-CN'
+};
+
+// 加载设置
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      settings = { ...settings, ...data };
+    }
+  } catch (e) {
+    console.log('Failed to load settings:', e);
+  }
+  applySettings();
+}
+
+// 保存设置
+function saveSettings() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch (e) {
+    console.log('Failed to save settings:', e);
+  }
+}
+
+// 应用设置到 UI
+function applySettings() {
+  // BGM
+  const bgmSlider = document.getElementById('bgmSlider');
+  const bgmValue = document.getElementById('bgmValue');
+  bgmSlider.value = settings.bgmVolume * 100;
+  bgmValue.textContent = `${Math.round(settings.bgmVolume * 100)}%`;
+
+  // SFX
+  const sfxSlider = document.getElementById('sfxSlider');
+  const sfxValue = document.getElementById('sfxValue');
+  sfxSlider.value = settings.sfxVolume * 100;
+  sfxValue.textContent = `${Math.round(settings.sfxVolume * 100)}%`;
+
+  // 震动
+  const toggle = document.getElementById('vibrationToggle');
+  const label = document.getElementById('vibrationLabel');
+  if (settings.vibration) {
+    toggle.classList.add('active');
+    label.textContent = 'ON';
+    label.style.color = '#4CAF50';
+  } else {
+    toggle.classList.remove('active');
+    label.textContent = 'OFF';
+    label.style.color = 'rgba(255,255,255,0.7)';
+  }
+}
+
+// 加载进度统计
+function loadProgressStats() {
+  try {
+    const saved = localStorage.getItem(PROGRESS_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      document.getElementById('statLevel').textContent = data.currentLevel || 1;
+      document.getElementById('statStars').textContent = data.totalStars || 0;
+      document.getElementById('statCompleted').textContent = data.completedLevels || 0;
+    }
+  } catch (e) {
+    console.log('Failed to load progress stats:', e);
+  }
+}
+
+// 重置进度
+function resetProgress() {
+  try {
+    localStorage.removeItem(PROGRESS_KEY);
+    localStorage.removeItem('lanternleaf_energy');
+    localStorage.removeItem('lanternleaf_level');
+    localStorage.removeItem('lanternleaf_player');
+
+    // 重置显示
+    document.getElementById('statLevel').textContent = '1';
+    document.getElementById('statStars').textContent = '0';
+    document.getElementById('statCompleted').textContent = '0';
+
+    showToast('游戏进度已重置');
+  } catch (e) {
+    console.log('Failed to reset progress:', e);
+  }
+}
+
+// 显示/隐藏确认弹窗
+function showConfirmModal() {
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function hideConfirmModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// 绑定事件
+function bindEvents() {
+  // BGM 滑块
+  document.getElementById('bgmSlider').addEventListener('input', (e) => {
+    settings.bgmVolume = e.target.value / 100;
+    document.getElementById('bgmValue').textContent = `${e.target.value}%`;
+    saveSettings();
+  });
+
+  // SFX 滑块
+  document.getElementById('sfxSlider').addEventListener('input', (e) => {
+    settings.sfxVolume = e.target.value / 100;
+    document.getElementById('sfxValue').textContent = `${e.target.value}%`;
+    saveSettings();
+  });
+
+  // 震动开关
+  document.getElementById('vibrationToggle').addEventListener('click', () => {
+    settings.vibration = !settings.vibration;
+    applySettings();
+    saveSettings();
+
+    // 测试震动
+    if (settings.vibration && navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+  });
+
+  // 重置按钮
+  document.getElementById('resetBtn').addEventListener('click', showConfirmModal);
+
+  // 弹窗按钮
+  document.getElementById('cancelBtn').addEventListener('click', hideConfirmModal);
+  document.getElementById('confirmBtn').addEventListener('click', () => {
+    hideConfirmModal();
+    resetProgress();
+  });
+}
+
+// 初始化
+function init() {
+  loadSettings();
+  loadProgressStats();
+  bindEvents();
+}
+
+init();
+</script>
+</body>
+</html>

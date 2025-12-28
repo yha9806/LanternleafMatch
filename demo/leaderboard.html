@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>灯笼叶子消消乐 - 排行榜</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #2d5a27 0%, #1a3518 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+    }
+    .container {
+      width: 100%;
+      max-width: 540px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 10px 0;
+    }
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #FFD700;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 25px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #333;
+    }
+    .my-rank {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.1));
+      border: 2px solid #FFD700;
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+    .my-rank .rank {
+      font-size: 28px;
+      font-weight: bold;
+      color: #FFD700;
+      min-width: 50px;
+      text-align: center;
+    }
+    .my-rank .avatar {
+      font-size: 40px;
+    }
+    .my-rank .info {
+      flex: 1;
+    }
+    .my-rank .name {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .my-rank .score {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-top: 4px;
+    }
+    .leaderboard-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .rank-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      transition: background 0.2s;
+    }
+    .rank-item:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .rank-item.top1 { background: rgba(255,215,0,0.2); }
+    .rank-item.top2 { background: rgba(192,192,192,0.15); }
+    .rank-item.top3 { background: rgba(205,127,50,0.15); }
+    .rank-item .rank {
+      font-size: 18px;
+      font-weight: bold;
+      min-width: 35px;
+      text-align: center;
+    }
+    .rank-item.top1 .rank { color: #FFD700; }
+    .rank-item.top2 .rank { color: #C0C0C0; }
+    .rank-item.top3 .rank { color: #CD7F32; }
+    .rank-item .medal {
+      font-size: 24px;
+      min-width: 35px;
+      text-align: center;
+    }
+    .rank-item .avatar {
+      font-size: 32px;
+    }
+    .rank-item .info {
+      flex: 1;
+    }
+    .rank-item .name {
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .rank-item .score {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+    .rank-item .stars {
+      font-size: 16px;
+      color: #FFD700;
+      font-weight: bold;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      opacity: 0.6;
+    }
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <h1 class="title">排行榜</h1>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('total')" id="tabTotal">总星榜</button>
+      <button class="tab" onclick="switchTab('weekly')" id="tabWeekly">周星榜</button>
+      <button class="tab" onclick="switchTab('friends')" id="tabFriends">好友榜</button>
+    </div>
+
+    <div class="my-rank" id="myRank">
+      <div class="rank">#--</div>
+      <div class="avatar">🙂</div>
+      <div class="info">
+        <div class="name">我</div>
+        <div class="score">0 颗星</div>
+      </div>
+    </div>
+
+    <div class="leaderboard-list" id="leaderboardList">
+      <!-- 动态生成 -->
+    </div>
+  </div>
+
+<script>
+// ============================================
+// 排行榜系统
+// ============================================
+
+// 模拟玩家数据
+const MOCK_PLAYERS = [
+  { name: '星辰大海', avatar: '🐱', stars: 450 },
+  { name: '森林守护者', avatar: '🐶', stars: 420 },
+  { name: '叶子收藏家', avatar: '🦊', stars: 385 },
+  { name: '消消乐大师', avatar: '🐰', stars: 350 },
+  { name: '橡果猎人', avatar: '🐻', stars: 320 },
+  { name: '治愈系玩家', avatar: '🐼', stars: 290 },
+  { name: '悠闲时光', avatar: '🐨', stars: 265 },
+  { name: '小确幸', avatar: '🐯', stars: 240 },
+  { name: '午后阳光', avatar: '🦁', stars: 210 },
+  { name: '花园精灵', avatar: '🐸', stars: 185 }
+];
+
+const MOCK_WEEKLY = [
+  { name: '周冠争霸', avatar: '🦋', stars: 85 },
+  { name: '连续登顶', avatar: '🐝', stars: 72 },
+  { name: '周末战士', avatar: '🐞', stars: 65 },
+  { name: '稳步前进', avatar: '🦎', stars: 58 },
+  { name: '新星崛起', avatar: '🐢', stars: 50 }
+];
+
+let currentTab = 'total';
+let myStars = 0;
+
+function loadMyStars() {
+  try {
+    const saved = localStorage.getItem('lanternleaf_player_progress');
+    if (saved) {
+      const data = JSON.parse(saved);
+      myStars = data.totalStars || 0;
+    }
+  } catch (e) {
+    console.log('Failed to load stars:', e);
+  }
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+
+  // 更新标签样式
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const list = document.getElementById('leaderboardList');
+  const myRankEl = document.getElementById('myRank');
+
+  let players = [];
+  let myRank = '--';
+
+  if (currentTab === 'total') {
+    players = [...MOCK_PLAYERS];
+    // 插入自己
+    const meIndex = players.findIndex(p => p.stars < myStars);
+    if (meIndex >= 0) {
+      myRank = meIndex + 1;
+    } else {
+      myRank = players.length + 1;
+    }
+  } else if (currentTab === 'weekly') {
+    players = [...MOCK_WEEKLY];
+    // 假设本周获得的星星
+    const weeklyStars = Math.floor(myStars * 0.2);
+    const meIndex = players.findIndex(p => p.stars < weeklyStars);
+    myRank = meIndex >= 0 ? meIndex + 1 : players.length + 1;
+  } else {
+    // 好友榜 - 显示空状态
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">👥</div>
+        <p>邀请好友一起玩吧!</p>
+        <p style="font-size:12px;margin-top:10px;">敬请期待社交功能</p>
+      </div>
+    `;
+    myRankEl.querySelector('.rank').textContent = '#--';
+    return;
+  }
+
+  // 更新我的排名
+  myRankEl.querySelector('.rank').textContent = '#' + myRank;
+  myRankEl.querySelector('.score').textContent = myStars + ' 颗星';
+
+  // 渲染列表
+  const medals = ['🥇', '🥈', '🥉'];
+
+  list.innerHTML = players.map((player, index) => {
+    const rank = index + 1;
+    const topClass = rank <= 3 ? 'top' + rank : '';
+
+    return `
+      <div class="rank-item ${topClass}">
+        ${rank <= 3
+          ? `<span class="medal">${medals[rank-1]}</span>`
+          : `<span class="rank">${rank}</span>`
+        }
+        <span class="avatar">${player.avatar}</span>
+        <div class="info">
+          <div class="name">${player.name}</div>
+          <div class="score">${currentTab === 'weekly' ? '本周' : '总计'} ${player.stars} 颗星</div>
+        </div>
+        <span class="stars">${player.stars} ⭐</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function goBack() {
+  window.location.href = 'menu.html';
+}
+
+// 初始化
+loadMyStars();
+renderLeaderboard();
+</script>
+</body>
+</html>

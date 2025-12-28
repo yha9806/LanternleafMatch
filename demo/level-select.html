@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>灯笼叶子消消乐 - 关卡选择</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #2d5a27 0%, #1a3518 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+    }
+    .container {
+      width: 100%;
+      max-width: 540px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* 顶部栏 */
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .back-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+    .back-btn:hover { background: rgba(255,255,255,0.3); }
+    .header-title {
+      flex: 1;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .header-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+    }
+    .stars-icon { color: #FFD700; }
+    /* 进度条 */
+    .progress-bar {
+      padding: 12px 20px;
+      background: rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #8BC34A);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .progress-text {
+      font-size: 14px;
+      min-width: 60px;
+      text-align: right;
+    }
+    /* 关卡网格 */
+    .levels-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .levels-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      padding-bottom: 20px;
+    }
+    /* 关卡按钮 */
+    .level-btn {
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .level-btn:active { transform: scale(0.92); }
+    .level-btn.unlocked {
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(76,175,80,0.4);
+    }
+    .level-btn.current {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #333;
+      box-shadow: 0 4px 15px rgba(255,215,0,0.5);
+      animation: pulse-current 2s infinite;
+    }
+    @keyframes pulse-current {
+      0%, 100% { box-shadow: 0 4px 15px rgba(255,215,0,0.5); }
+      50% { box-shadow: 0 4px 25px rgba(255,215,0,0.8); }
+    }
+    .level-btn.locked {
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.5);
+      cursor: not-allowed;
+    }
+    .level-btn.locked:active { transform: none; }
+    .level-num {
+      font-size: 20px;
+    }
+    .level-stars {
+      font-size: 10px;
+      margin-top: 2px;
+      letter-spacing: -2px;
+    }
+    .lock-icon {
+      font-size: 20px;
+    }
+    /* 区域分隔 */
+    .region-divider {
+      grid-column: 1 / -1;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.7;
+      border-top: 1px solid rgba(255,255,255,0.2);
+      margin-top: 10px;
+    }
+    /* 底部体力栏 */
+    .footer {
+      padding: 16px 20px;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .energy-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.15);
+      padding: 10px 20px;
+      border-radius: 25px;
+    }
+    .energy-icon { font-size: 20px; }
+    .energy-value { font-size: 18px; font-weight: bold; }
+    .energy-timer { font-size: 12px; opacity: 0.7; }
+    /* 提示弹窗 */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 顶部栏 -->
+    <div class="header">
+      <a href="menu.html" class="back-btn">←</a>
+      <div class="header-title">选择关卡</div>
+      <div class="header-stats">
+        <span class="stars-icon">⭐</span>
+        <span id="totalStars">0</span>
+      </div>
+    </div>
+
+    <!-- 进度条 -->
+    <div class="progress-bar">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+      <div class="progress-text" id="progressText">0/50</div>
+    </div>
+
+    <!-- 关卡网格 -->
+    <div class="levels-scroll" id="levelsScroll">
+      <div class="levels-grid" id="levelsGrid"></div>
+    </div>
+
+    <!-- 底部体力栏 -->
+    <div class="footer">
+      <div class="energy-display">
+        <span class="energy-icon">⚡</span>
+        <span class="energy-value" id="energy">5/5</span>
+        <span class="energy-timer" id="energyTimer">已满</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+// ============================================
+// 关卡选择逻辑
+// ============================================
+
+const BASE_LEVELS = 50;  // 基础关卡数
+const ENERGY_CONFIG = {
+  max: 5,
+  regenSeconds: 20 * 60,
+  newbieProtection: 10
+};
+
+// 区域名称（基础50关 + 无限关卡区域）
+const REGION_NAMES = {
+  10: '🌿 新手森林',
+  20: '🍂 秋叶小径',
+  30: '🌙 月光湖畔',
+  40: '🏔️ 迷雾山谷',
+  50: '👑 传说之地'
+};
+
+// 无限关卡区域名称
+function getInfiniteRegionName(level) {
+  const cycle = Math.floor((level - 51) / 25);
+  const regions = [
+    '🌌 星空秘境',
+    '🔥 烈焰深渊',
+    '❄️ 冰霜王座',
+    '🌸 樱花仙境',
+    '⚡ 雷霆之巅',
+    '🌊 深海遗迹',
+    '🌙 永夜森林',
+    '☀️ 黎明圣殿'
+  ];
+  return regions[cycle % regions.length] + ` (${cycle + 1}轮)`;
+}
+
+let playerProgress = {
+  currentLevel: 1,
+  levelStars: {},
+  totalStars: 0,
+  completedLevels: 0
+};
+
+let energyState = {
+  current: 5,
+  lastRegenTime: Date.now()
+};
+
+// 加载进度
+function loadProgress() {
+  try {
+    const saved = localStorage.getItem('lanternleaf_player_progress');
+    if (saved) {
+      const data = JSON.parse(saved);
+      playerProgress = {
+        currentLevel: data.currentLevel || 1,
+        levelStars: data.levelStars || {},
+        totalStars: data.totalStars || 0,
+        completedLevels: data.completedLevels || 0
+      };
+    }
+  } catch (e) {
+    console.log('Failed to load progress:', e);
+  }
+}
+
+// 加载体力
+function loadEnergy() {
+  try {
+    const saved = localStorage.getItem('lanternleaf_energy');
+    if (saved) {
+      const data = JSON.parse(saved);
+      energyState.current = data.current;
+      energyState.lastRegenTime = data.lastRegenTime;
+
+      // 计算离线恢复
+      const now = Date.now();
+      const elapsed = now - energyState.lastRegenTime;
+      const regenPoints = Math.floor(elapsed / (ENERGY_CONFIG.regenSeconds * 1000));
+      energyState.current = Math.min(ENERGY_CONFIG.max, energyState.current + regenPoints);
+    }
+  } catch (e) {
+    console.log('Failed to load energy:', e);
+  }
+}
+
+// 更新体力显示
+function updateEnergyDisplay() {
+  document.getElementById('energy').textContent =
+    `${energyState.current}/${ENERGY_CONFIG.max}`;
+
+  if (energyState.current < ENERGY_CONFIG.max) {
+    const elapsed = Date.now() - energyState.lastRegenTime;
+    const remaining = (ENERGY_CONFIG.regenSeconds * 1000) -
+      (elapsed % (ENERGY_CONFIG.regenSeconds * 1000));
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    document.getElementById('energyTimer').textContent =
+      `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  } else {
+    document.getElementById('energyTimer').textContent = '已满';
+  }
+}
+
+// 计算显示的最大关卡数（当前关卡 + 10关预览，至少显示50关）
+function getMaxDisplayLevel() {
+  return Math.max(BASE_LEVELS, playerProgress.currentLevel + 10);
+}
+
+// 生成关卡网格
+function generateLevelGrid() {
+  const grid = document.getElementById('levelsGrid');
+  grid.innerHTML = '';
+
+  const maxLevel = getMaxDisplayLevel();
+  let lastRegionLevel = 0;
+
+  for (let level = 1; level <= maxLevel; level++) {
+    // 区域分隔（基础关卡）
+    if (level <= BASE_LEVELS) {
+      if (level === 1 || level === 11 || level === 21 || level === 31 || level === 41) {
+        const regionEnd = Math.min(level + 9, BASE_LEVELS);
+        const divider = document.createElement('div');
+        divider.className = 'region-divider';
+        divider.textContent = REGION_NAMES[regionEnd] || '';
+        grid.appendChild(divider);
+        lastRegionLevel = level;
+      }
+    } else {
+      // 无限关卡区域分隔（每25关一个区域）
+      const regionStart = 51 + Math.floor((level - 51) / 25) * 25;
+      if (level === regionStart && level !== lastRegionLevel) {
+        const divider = document.createElement('div');
+        divider.className = 'region-divider';
+        divider.textContent = getInfiniteRegionName(level) + ' ∞';
+        grid.appendChild(divider);
+        lastRegionLevel = level;
+      }
+    }
+
+    const btn = document.createElement('button');
+    btn.className = 'level-btn';
+
+    const isUnlocked = level <= playerProgress.currentLevel;
+    const isCurrent = level === playerProgress.currentLevel;
+    const stars = playerProgress.levelStars[level] || 0;
+    const isBossLevel = level > BASE_LEVELS && level % 25 === 0;
+
+    if (isCurrent) {
+      btn.classList.add('current');
+    } else if (isUnlocked) {
+      btn.classList.add('unlocked');
+    } else {
+      btn.classList.add('locked');
+    }
+
+    if (isUnlocked) {
+      btn.innerHTML = `
+        <span class="level-num">${isBossLevel ? '🔥' : ''}${level}</span>
+        <span class="level-stars">${getStarsDisplay(stars)}</span>
+      `;
+      btn.onclick = () => startLevel(level);
+    } else {
+      btn.innerHTML = `<span class="lock-icon">🔒</span>`;
+      btn.onclick = () => showToast('请先通关前置关卡');
+    }
+
+    grid.appendChild(btn);
+  }
+
+  // 更新进度显示（无限模式显示已通关数）
+  document.getElementById('totalStars').textContent = playerProgress.totalStars;
+
+  if (playerProgress.currentLevel > BASE_LEVELS) {
+    // 无限模式：显示已通关关卡数
+    document.getElementById('progressText').textContent =
+      `${playerProgress.completedLevels}关 ∞`;
+    document.getElementById('progressFill').style.width = '100%';
+  } else {
+    document.getElementById('progressText').textContent =
+      `${playerProgress.completedLevels}/${BASE_LEVELS}`;
+    document.getElementById('progressFill').style.width =
+      `${(playerProgress.completedLevels / BASE_LEVELS) * 100}%`;
+  }
+
+  // 滚动到当前关卡
+  scrollToCurrentLevel();
+}
+
+function getStarsDisplay(stars) {
+  if (stars === 0) return '☆☆☆';
+  if (stars === 1) return '⭐☆☆';
+  if (stars === 2) return '⭐⭐☆';
+  return '⭐⭐⭐';
+}
+
+function scrollToCurrentLevel() {
+  setTimeout(() => {
+    const currentBtn = document.querySelector('.level-btn.current');
+    if (currentBtn) {
+      currentBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+}
+
+function startLevel(level) {
+  // 检查体力（新手保护期不检查）
+  if (level > ENERGY_CONFIG.newbieProtection && energyState.current <= 0) {
+    showToast('体力不足，请稍后再试');
+    return;
+  }
+
+  // 保存选择的关卡到 sessionStorage
+  sessionStorage.setItem('selectedLevel', level.toString());
+
+  // 跳转到游戏页面
+  window.location.href = 'index.html';
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// 初始化
+function init() {
+  loadProgress();
+  loadEnergy();
+  generateLevelGrid();
+  updateEnergyDisplay();
+
+  // 定时更新体力
+  setInterval(() => {
+    // 自动恢复
+    if (energyState.current < ENERGY_CONFIG.max) {
+      const elapsed = Date.now() - energyState.lastRegenTime;
+      if (elapsed >= ENERGY_CONFIG.regenSeconds * 1000) {
+        energyState.current++;
+        energyState.lastRegenTime = Date.now();
+      }
+    }
+    updateEnergyDisplay();
+  }, 1000);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -8,8 +8,8 @@ import { RNG, stableHash } from './RNG';
 import { MossGenerator } from './MossGenerator';
 import { MatchFinder } from './MatchFinder';
 
-// 从 config/levels.json 加载
-import levelsConfig from '../../config/levels.json';
+// 从 assets/resources/configs/levels.json 加载
+import levelsConfig from '../../assets/resources/configs/levels.json';
 
 const BOARD_SIZE = 6;
 const TILE_TYPES: TileType[] = ['leaf', 'acorn', 'star', 'fish', 'bone'];

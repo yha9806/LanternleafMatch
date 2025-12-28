@@ -5,8 +5,8 @@
 import type { IEnergyManager } from './interfaces';
 import type { EnergyState } from '../types';
 
-// 从 config/energy.json 加载
-import energyConfig from '../../config/energy.json';
+// 从 assets/resources/configs/energy.json 加载
+import energyConfig from '../../assets/resources/configs/energy.json';
 
 export class EnergyManager implements IEnergyManager {
   private config = energyConfig;

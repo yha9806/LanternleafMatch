@@ -364,8 +364,8 @@ export class DifficultyEstimator {
     const byPhase: Record<string, { count: number; avgDifficulty: number }> = {};
     for (const phase of DIFFICULTY_PHASES) {
       const phaseBreakdowns = breakdowns.filter(
-        b => levels.find(l => l.level === b.phase.levelRange[0])?.level! >= phase.levelRange[0] &&
-             levels.find(l => l.level === b.phase.levelRange[0])?.level! <= phase.levelRange[1]
+        b => levels.find(l => l.level_index === b.phase.levelRange[0])?.level_index! >= phase.levelRange[0] &&
+             levels.find(l => l.level_index === b.phase.levelRange[0])?.level_index! <= phase.levelRange[1]
       );
       if (phaseBreakdowns.length > 0) {
         byPhase[phase.name] = {
@@ -384,7 +384,7 @@ export class DifficultyEstimator {
 
       if (Math.abs(breakdown.score - expected) > 2) {
         outliers.push({
-          level: level.level,
+          level: level.level_index,
           score: breakdown.score,
           expected,
         });

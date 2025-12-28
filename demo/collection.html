@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>灯笼叶子消消乐 - 收藏馆</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #2d5a27 0%, #1a3518 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+    }
+    .container {
+      width: 100%;
+      max-width: 540px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 10px 0;
+    }
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #FFD700;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 25px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      color: #333;
+    }
+    .progress-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    .progress-bar .label {
+      font-size: 14px;
+    }
+    .progress-bar .bar {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #8BC34A);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .progress-bar .count {
+      font-size: 14px;
+      color: #FFD700;
+      font-weight: bold;
+    }
+    /* 明信片网格 */
+    .postcards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+    .postcard {
+      aspect-ratio: 4/3;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .postcard:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .postcard.unlocked {
+      background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.1));
+      border: 2px solid rgba(255,215,0,0.3);
+    }
+    .postcard.locked {
+      opacity: 0.5;
+    }
+    .postcard .icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+    .postcard .name {
+      font-size: 12px;
+      text-align: center;
+      padding: 0 8px;
+    }
+    .postcard .lock-icon {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 16px;
+    }
+    .postcard .unlock-hint {
+      position: absolute;
+      bottom: 8px;
+      font-size: 10px;
+      opacity: 0.7;
+    }
+    /* 成就网格 */
+    .achievements-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .achievement {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+    .achievement.unlocked {
+      background: rgba(76,175,80,0.2);
+      border: 1px solid rgba(76,175,80,0.4);
+    }
+    .achievement.locked {
+      opacity: 0.6;
+    }
+    .achievement .icon {
+      font-size: 32px;
+      min-width: 45px;
+      text-align: center;
+    }
+    .achievement .info {
+      flex: 1;
+    }
+    .achievement .name {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .achievement .desc {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+    .achievement .progress {
+      font-size: 12px;
+      color: #FFD700;
+      margin-top: 4px;
+    }
+    .achievement .reward {
+      text-align: center;
+    }
+    .achievement .reward .icon {
+      font-size: 24px;
+    }
+    .achievement .reward .amount {
+      font-size: 11px;
+      color: #4CAF50;
+    }
+    .achievement .check {
+      color: #4CAF50;
+      font-size: 24px;
+    }
+    /* 弹窗 */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal.show { display: flex; }
+    .modal-content {
+      background: linear-gradient(135deg, #1a3518, #2d5a27);
+      border: 2px solid #FFD700;
+      border-radius: 16px;
+      padding: 25px;
+      text-align: center;
+      max-width: 320px;
+    }
+    .modal-content .postcard-preview {
+      font-size: 80px;
+      margin-bottom: 15px;
+    }
+    .modal-content h3 {
+      color: #FFD700;
+      margin-bottom: 10px;
+    }
+    .modal-content p {
+      font-size: 14px;
+      opacity: 0.8;
+      line-height: 1.6;
+    }
+    .modal-content button {
+      margin-top: 20px;
+      padding: 12px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 25px;
+      background: #FFD700;
+      color: #333;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <h1 class="title">收藏馆</h1>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('postcards')" id="tabPostcards">明信片</button>
+      <button class="tab" onclick="switchTab('achievements')" id="tabAchievements">成就</button>
+    </div>
+
+    <div class="progress-bar" id="progressBar">
+      <span class="label">收集进度</span>
+      <div class="bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+      <span class="count" id="progressCount">0/5</span>
+    </div>
+
+    <div id="contentArea">
+      <!-- 动态生成 -->
+    </div>
+  </div>
+
+  <div class="modal" id="postcardModal">
+    <div class="modal-content">
+      <div class="postcard-preview" id="modalIcon"></div>
+      <h3 id="modalTitle"></h3>
+      <p id="modalDesc"></p>
+      <button onclick="closeModal()">关闭</button>
+    </div>
+  </div>
+
+<script>
+// ============================================
+// 收藏馆系统
+// ============================================
+
+// 明信片配置 (每10关解锁1张)
+const POSTCARDS = [
+  { id: 1, name: '森林初晨', icon: '🌅', desc: '猫咪和狗狗在森林中相遇的清晨...', unlockLevel: 10 },
+  { id: 2, name: '午后阳光', icon: '☀️', desc: '温暖的阳光洒在草地上，两位小伙伴在打盹...', unlockLevel: 20 },
+  { id: 3, name: '蝴蝶之舞', icon: '🦋', desc: '一只蝴蝶飞过，引起了猫咪的注意...', unlockLevel: 30 },
+  { id: 4, name: '雨后彩虹', icon: '🌈', desc: '夏日阵雨过后，天边挂起了彩虹...', unlockLevel: 40 },
+  { id: 5, name: '秋日落叶', icon: '🍂', desc: '金黄的落叶铺满小路，两位朋友一起散步...', unlockLevel: 50 }
+];
+
+// 成就配置
+const ACHIEVEMENTS = [
+  { id: 1, name: '初次见面', icon: '👋', desc: '完成第1关', condition: { type: 'level', value: 1 }, reward: { coins: 50 } },
+  { id: 2, name: '崭露头角', icon: '🌱', desc: '完成第5关', condition: { type: 'level', value: 5 }, reward: { coins: 100 } },
+  { id: 3, name: '稳步前行', icon: '🚶', desc: '完成第10关', condition: { type: 'level', value: 10 }, reward: { coins: 200 } },
+  { id: 4, name: '小有成就', icon: '🏃', desc: '完成第20关', condition: { type: 'level', value: 20 }, reward: { hint: 2 } },
+  { id: 5, name: '消除达人', icon: '⭐', desc: '完成第30关', condition: { type: 'level', value: 30 }, reward: { coins: 500 } },
+  { id: 6, name: '收藏家', icon: '🖼️', desc: '收集3张明信片', condition: { type: 'postcards', value: 3 }, reward: { gems: 5 } },
+  { id: 7, name: '满星挑战', icon: '🌟', desc: '累计获得50颗星', condition: { type: 'stars', value: 50 }, reward: { hint: 3 } },
+  { id: 8, name: '星光熠熠', icon: '✨', desc: '累计获得100颗星', condition: { type: 'stars', value: 100 }, reward: { coins: 1000 } },
+  { id: 9, name: '连击大师', icon: '🔥', desc: '达成5连消', condition: { type: 'combo', value: 5 }, reward: { shuffle: 2 } },
+  { id: 10, name: '签到达人', icon: '📅', desc: '连续签到7天', condition: { type: 'streak', value: 7 }, reward: { gems: 10 } },
+  { id: 11, name: '勤劳玩家', icon: '💪', desc: '完成第40关', condition: { type: 'level', value: 40 }, reward: { hammer: 2 } },
+  { id: 12, name: '终极挑战', icon: '🏆', desc: '完成第50关', condition: { type: 'level', value: 50 }, reward: { gems: 20 } }
+];
+
+let currentTab = 'postcards';
+let playerData = {
+  completedLevels: 0,
+  totalStars: 0,
+  maxCombo: 0,
+  streakDays: 0,
+  unlockedAchievements: []
+};
+
+function loadPlayerData() {
+  try {
+    const saved = localStorage.getItem('lanternleaf_player_progress');
+    if (saved) {
+      const data = JSON.parse(saved);
+      playerData.completedLevels = data.completedLevels || 0;
+      playerData.totalStars = data.totalStars || 0;
+      playerData.unlockedAchievements = data.unlockedAchievements || [];
+    }
+
+    // 加载连续签到天数
+    const dailySaved = localStorage.getItem('lanternleaf_daily_reward');
+    if (dailySaved) {
+      const dailyData = JSON.parse(dailySaved);
+      playerData.streakDays = dailyData.streakDays || 0;
+    }
+
+    // 加载最大连消
+    const comboSaved = localStorage.getItem('lanternleaf_combo_stats');
+    if (comboSaved) {
+      const comboData = JSON.parse(comboSaved);
+      playerData.maxCombo = comboData.allTimeMax || 0;
+    }
+  } catch (e) {
+    console.log('Failed to load player data:', e);
+  }
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+
+  renderContent();
+}
+
+function renderContent() {
+  if (currentTab === 'postcards') {
+    renderPostcards();
+  } else {
+    renderAchievements();
+  }
+}
+
+function renderPostcards() {
+  const area = document.getElementById('contentArea');
+  const progressBar = document.getElementById('progressBar');
+  progressBar.style.display = 'flex';
+
+  // 计算解锁的明信片数量
+  const unlockedCount = POSTCARDS.filter(p => playerData.completedLevels >= p.unlockLevel).length;
+
+  document.getElementById('progressFill').style.width = (unlockedCount / POSTCARDS.length * 100) + '%';
+  document.getElementById('progressCount').textContent = `${unlockedCount}/${POSTCARDS.length}`;
+
+  area.innerHTML = `
+    <div class="postcards-grid">
+      ${POSTCARDS.map(postcard => {
+        const isUnlocked = playerData.completedLevels >= postcard.unlockLevel;
+        return `
+          <div class="postcard ${isUnlocked ? 'unlocked' : 'locked'}"
+               onclick="${isUnlocked ? `showPostcard(${postcard.id})` : ''}">
+            <span class="icon">${isUnlocked ? postcard.icon : '❓'}</span>
+            <span class="name">${isUnlocked ? postcard.name : '???'}</span>
+            ${!isUnlocked ? `
+              <span class="lock-icon">🔒</span>
+              <span class="unlock-hint">通关第${postcard.unlockLevel}关解锁</span>
+            ` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderAchievements() {
+  const area = document.getElementById('contentArea');
+  const progressBar = document.getElementById('progressBar');
+  progressBar.style.display = 'flex';
+
+  // 计算已解锁成就数量
+  const unlockedCount = ACHIEVEMENTS.filter(a => checkAchievementUnlocked(a)).length;
+
+  document.getElementById('progressFill').style.width = (unlockedCount / ACHIEVEMENTS.length * 100) + '%';
+  document.getElementById('progressCount').textContent = `${unlockedCount}/${ACHIEVEMENTS.length}`;
+
+  area.innerHTML = `
+    <div class="achievements-grid">
+      ${ACHIEVEMENTS.map(achievement => {
+        const isUnlocked = checkAchievementUnlocked(achievement);
+        const progress = getAchievementProgress(achievement);
+
+        return `
+          <div class="achievement ${isUnlocked ? 'unlocked' : 'locked'}">
+            <span class="icon">${achievement.icon}</span>
+            <div class="info">
+              <div class="name">${achievement.name}</div>
+              <div class="desc">${achievement.desc}</div>
+              ${!isUnlocked ? `<div class="progress">进度: ${progress.current}/${progress.target}</div>` : ''}
+            </div>
+            ${isUnlocked
+              ? '<span class="check">✓</span>'
+              : `<div class="reward">
+                  <span class="icon">${getRewardIcon(achievement.reward)}</span>
+                  <div class="amount">+${getRewardAmount(achievement.reward)}</div>
+                </div>`
+            }
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function checkAchievementUnlocked(achievement) {
+  const cond = achievement.condition;
+  switch (cond.type) {
+    case 'level':
+      return playerData.completedLevels >= cond.value;
+    case 'stars':
+      return playerData.totalStars >= cond.value;
+    case 'combo':
+      return playerData.maxCombo >= cond.value;
+    case 'streak':
+      return playerData.streakDays >= cond.value;
+    case 'postcards':
+      const unlocked = POSTCARDS.filter(p => playerData.completedLevels >= p.unlockLevel).length;
+      return unlocked >= cond.value;
+    default:
+      return false;
+  }
+}
+
+function getAchievementProgress(achievement) {
+  const cond = achievement.condition;
+  let current = 0;
+
+  switch (cond.type) {
+    case 'level':
+      current = playerData.completedLevels;
+      break;
+    case 'stars':
+      current = playerData.totalStars;
+      break;
+    case 'combo':
+      current = playerData.maxCombo;
+      break;
+    case 'streak':
+      current = playerData.streakDays;
+      break;
+    case 'postcards':
+      current = POSTCARDS.filter(p => playerData.completedLevels >= p.unlockLevel).length;
+      break;
+  }
+
+  return { current: Math.min(current, cond.value), target: cond.value };
+}
+
+function getRewardIcon(reward) {
+  if (reward.coins) return '💰';
+  if (reward.gems) return '💎';
+  if (reward.hint) return '💡';
+  if (reward.shuffle) return '🔀';
+  if (reward.hammer) return '🔨';
+  return '🎁';
+}
+
+function getRewardAmount(reward) {
+  return Object.values(reward)[0];
+}
+
+function showPostcard(id) {
+  const postcard = POSTCARDS.find(p => p.id === id);
+  if (!postcard) return;
+
+  document.getElementById('modalIcon').textContent = postcard.icon;
+  document.getElementById('modalTitle').textContent = postcard.name;
+  document.getElementById('modalDesc').textContent = postcard.desc;
+  document.getElementById('postcardModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('postcardModal').classList.remove('show');
+}
+
+function goBack() {
+  window.location.href = 'menu.html';
+}
+
+// 初始化
+loadPlayerData();
+renderContent();
+</script>
+</body>
+</html>

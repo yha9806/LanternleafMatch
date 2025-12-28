@@ -11,7 +11,11 @@
     "preview": "vite preview",
     "lint": "eslint assets/scripts --ext .ts",
     "typecheck": "tsc --noEmit -p tsconfig.cocos.json",
-    "gen:level": "tsx scripts/generate-level.ts"
+    "gen:level": "tsx scripts/generate-level.ts",
+    "test:e2e": "tsx e2e/runner.ts",
+    "test:e2e:update": "tsx e2e/runner.ts --update-snapshots",
+    "test:review": "tsx e2e/runner.ts --review",
+    "test:review:baseline": "tsx e2e/runner.ts --review --baseline"
   },
   "keywords": [
     "match3",
@@ -25,12 +29,13 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.0",
-    "vitest": "^1.0.0",
-    "tsx": "^4.7.0",
-    "eslint": "^8.55.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
-    "@typescript-eslint/eslint-plugin": "^6.13.0"
+    "eslint": "^8.55.0",
+    "playwright": "^1.57.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -113,8 +113,8 @@ class LevelBatchValidator {
    * 验证单个关卡
    */
   private async validateLevel(level: number, config: ValidatorConfig): Promise<LevelValidationResult> {
-    // 生成关卡定义
-    const levelDef = this.generator.generateLevel(level);
+    // 生成关卡定义（使用固定 playerId 保证可复现）
+    const levelDef = this.generator.generateLevel(level, 'validator_test_player');
 
     // 蒙特卡洛验证
     const validation = this.validator.validate(levelDef, {
@@ -137,13 +137,13 @@ class LevelBatchValidator {
       status = 'fail';
     } else if (validation.winRate < difficulty.phase.targetWinRate.min) {
       issues.push(`胜率低于目标: ${(validation.winRate * 100).toFixed(1)}% < ${(difficulty.phase.targetWinRate.min * 100)}%`);
-      status = status === 'fail' ? 'fail' : 'warn';
+      status = 'warn';
     }
 
     // 检查难度偏差
     if (Math.abs(difficulty.score - difficulty.phase.targetDifficulty) > 2) {
       issues.push(`难度偏差: ${difficulty.score} vs 目标 ${difficulty.phase.targetDifficulty}`);
-      status = status === 'fail' ? 'fail' : 'warn';
+      if (status === 'pass') status = 'warn';
     }
 
     // 添加难度分析警告
@@ -152,7 +152,7 @@ class LevelBatchValidator {
     // 检查死局率
     if (validation.deadlockRate > 0.2) {
       issues.push(`死局率过高: ${(validation.deadlockRate * 100).toFixed(1)}%`);
-      status = status === 'fail' ? 'fail' : 'warn';
+      if (status === 'pass') status = 'warn';
     }
 
     return {
