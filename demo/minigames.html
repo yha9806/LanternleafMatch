@@ -513,6 +513,139 @@
       50% { transform: scale(1.2); }
       100% { transform: scale(1); }
     }
+    /* 新版扫雷探索 V2 样式 */
+    .explore-toolbar {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      justify-content: center;
+    }
+    .tool-btn {
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 15px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    .tool-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.25);
+    }
+    .tool-btn.active {
+      background: rgba(255,150,0,0.4);
+      border-color: #FFA500;
+    }
+    .tool-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .explore-cell.trap {
+      background: linear-gradient(145deg, #8B0000, #5a0000) !important;
+      border-color: #3a0000 !important;
+      animation: trap-reveal 0.5s ease-out;
+    }
+    @keyframes trap-reveal {
+      0% { transform: scale(1.5); }
+      50% { transform: scale(0.8); }
+      100% { transform: scale(1); }
+    }
+    .explore-cell.exit {
+      background: linear-gradient(145deg, #4169E1, #2a4a9a) !important;
+      border-color: #1a3a7a !important;
+    }
+    .explore-cell.start {
+      background: linear-gradient(145deg, #90EE90, #70cc70) !important;
+      border-color: #50aa50 !important;
+    }
+    .explore-cell.flagged {
+      background: linear-gradient(145deg, #FFD700, #cc9900);
+    }
+
+    /* 数字颜色 */
+    .explore-cell.number-1 { color: #0000FF; }
+    .explore-cell.number-2 { color: #008000; }
+    .explore-cell.number-3 { color: #FF0000; }
+    .explore-cell.number-4 { color: #000080; }
+    .explore-cell.number-5 { color: #800000; }
+    .explore-cell.number-6 { color: #008080; }
+    .explore-cell.number-7 { color: #000000; }
+    .explore-cell.number-8 { color: #808080; }
+
+    .explore-cell.revealed.number-1,
+    .explore-cell.revealed.number-2,
+    .explore-cell.revealed.number-3,
+    .explore-cell.revealed.number-4,
+    .explore-cell.revealed.number-5,
+    .explore-cell.revealed.number-6,
+    .explore-cell.revealed.number-7,
+    .explore-cell.revealed.number-8 {
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    /* 震动动画 */
+    .shake {
+      animation: shake-screen 0.5s ease-out;
+    }
+    @keyframes shake-screen {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+
+    /* 商店样式 */
+    .shop-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .shop-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .shop-item:hover {
+      background: rgba(255,255,255,0.2);
+      transform: scale(1.02);
+    }
+    .shop-item .item-icon {
+      font-size: 24px;
+    }
+    .shop-item .item-name {
+      flex: 1;
+      margin-left: 10px;
+    }
+    .shop-item .item-price {
+      font-weight: bold;
+      color: #FFD700;
+    }
+    .shop-balance {
+      text-align: center;
+      margin: 10px 0;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .game-stats {
+      display: flex;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .game-stats .lives {
+      letter-spacing: 2px;
+    }
+
     .explore-abilities {
       display: flex;
       gap: 10px;
@@ -686,13 +819,18 @@ let rescueTimeRemaining = 15;
 let rescueObstacles = [];
 let rescueElementsUsed = [];
 
-// Forest Explore Game State
+// Forest Explore Game State (Minesweeper V2)
 let exploreGrid = [];
-let exploreTreasures = [];
-let explorePaws = 6;
-let exploreRewards = { coins: 0, gems: 0, boosters: [] };
-let exploreAbilities = { cat: true, dog: true };
-let exploreHeatmapActive = false;
+let exploreLevel = 1;
+let exploreLives = 3;
+let exploreMaxLives = 3;
+let exploreCoins = 0;
+let exploreGems = 0;
+let exploreItems = { maps: 1, picks: 1 };
+let exploreGameStatus = 'idle'; // 'playing' | 'won' | 'lost' | 'shopping'
+let exploreFlagMode = false;
+let exploreStartPos = null;
+let exploreExitPos = null;
 
 // ============================================
 // Collection Sort Game (收集整理)
@@ -1062,242 +1200,431 @@ function endRescueGame(success) {
 }
 
 // ============================================
-// Forest Explore Game (森林探索)
+// Forest Explore Game V2 (森林探索 - 扫雷版)
 // ============================================
-const EXPLORE_CONTENTS = {
-  empty: { icon: '🍃', reward: null },
-  acorn: { icon: '🌰', reward: { coins: 30 } },
-  star: { icon: '⭐', reward: { gems: 1 } },
-  fish: { icon: '🐟', reward: { coins: 50 } },
-  bone: { icon: '🦴', reward: { coins: 50 } },
-  trap: { icon: '🌿💀', reward: { paws: -1 } },
-  treasure: { icon: '🎁', reward: { coins: 100, gems: 2 } },
+
+// 关卡配置
+const EXPLORE_LEVELS = {
+  getSize: (level) => Math.min(5 + Math.floor((level - 1) / 5), 9),
+  getTraps: (level) => Math.min(3 + Math.floor(level * 0.8), 20),
+  getTreasures: (level) => Math.min(2 + Math.floor(level / 3), 6),
 };
 
-const EXPLORE_WEIGHTS = {
-  empty: 35,
-  acorn: 25,
-  star: 10,
-  fish: 10,
-  bone: 10,
-  trap: 8,
-  treasure: 2,
+// 内容类型
+const EXPLORE_CELL_TYPES = {
+  empty: { icon: '', isPassable: true },
+  trap: { icon: '💀', isPassable: false },
+  treasure: { icon: '🎁', isPassable: true, reward: { coins: 50 } },
+  gem: { icon: '💎', isPassable: true, reward: { gems: 1 } },
+  acorn: { icon: '🌰', isPassable: true, reward: { coins: 20 } },
+  fish: { icon: '🐟', isPassable: true, reward: { coins: 30 } },
+  bone: { icon: '🦴', isPassable: true, reward: { coins: 30 } },
+  start: { icon: '🐱', isPassable: true },
+  exit: { icon: '🚪', isPassable: true },
+  obstacle: { icon: '🪨', isPassable: false },
 };
 
 function initExploreGame() {
-  exploreGrid = [];
-  exploreTreasures = [];
-  explorePaws = 6;
-  exploreRewards = { coins: 0, gems: 0, boosters: [] };
-  exploreAbilities = { cat: true, dog: true };
-  exploreHeatmapActive = false;
-
-  // 生成网格
-  for (let r = 0; r < 5; r++) {
-    exploreGrid[r] = [];
-    for (let c = 0; c < 5; c++) {
-      exploreGrid[r][c] = {
-        content: weightedRandom(EXPLORE_WEIGHTS),
-        revealed: false,
-        flagged: false,
-      };
-    }
+  // 如果是新游戏，重置所有状态
+  if (exploreGameStatus === 'idle' || exploreGameStatus === 'lost') {
+    exploreLevel = 1;
+    exploreLives = 3;
+    exploreCoins = 0;
+    exploreGems = 0;
+    exploreItems = { maps: 1, picks: 1 };
   }
 
-  // 确保至少有一个宝箱
-  const treasureCount = exploreGrid.flat().filter(cell => cell.content === 'treasure').length;
-  if (treasureCount === 0) {
-    const r = Math.floor(Math.random() * 5);
-    const c = Math.floor(Math.random() * 5);
-    exploreGrid[r][c].content = 'treasure';
-  }
+  exploreFlagMode = false;
+  exploreGameStatus = 'playing';
 
-  // 记录宝箱位置
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      if (exploreGrid[r][c].content === 'treasure') {
-        exploreTreasures.push({ row: r, col: c });
-      }
-    }
+  // 生成可解网格
+  let attempts = 0;
+  do {
+    generateExploreGrid();
+    attempts++;
+  } while (!isExploreSolvable() && attempts < 100);
+
+  if (attempts >= 100) {
+    console.warn('Failed to generate solvable grid, using last attempt');
   }
 
   gameState = 'playing';
 }
 
-function weightedRandom(weights) {
-  const total = Object.values(weights).reduce((a, b) => a + b, 0);
-  let random = Math.random() * total;
-  for (const [key, weight] of Object.entries(weights)) {
-    random -= weight;
-    if (random <= 0) return key;
+function generateExploreGrid() {
+  const size = EXPLORE_LEVELS.getSize(exploreLevel);
+  const trapCount = EXPLORE_LEVELS.getTraps(exploreLevel);
+  const treasureCount = EXPLORE_LEVELS.getTreasures(exploreLevel);
+
+  // 创建空网格
+  exploreGrid = [];
+  for (let r = 0; r < size; r++) {
+    exploreGrid[r] = [];
+    for (let c = 0; c < size; c++) {
+      exploreGrid[r][c] = {
+        type: 'empty',
+        revealed: false,
+        flagged: false,
+        adjacentTraps: 0,
+      };
+    }
   }
-  return 'empty';
+
+  // 放置入口和出口
+  exploreStartPos = { row: size - 1, col: 0 };
+  exploreExitPos = { row: 0, col: size - 1 };
+  exploreGrid[exploreStartPos.row][exploreStartPos.col].type = 'start';
+  exploreGrid[exploreStartPos.row][exploreStartPos.col].revealed = true;
+  exploreGrid[exploreExitPos.row][exploreExitPos.col].type = 'exit';
+
+  // 放置陷阱（避开入口、出口及其周围）
+  let trapsPlaced = 0;
+  while (trapsPlaced < trapCount) {
+    const r = Math.floor(Math.random() * size);
+    const c = Math.floor(Math.random() * size);
+    if (canPlaceTrap(r, c, size)) {
+      exploreGrid[r][c].type = 'trap';
+      trapsPlaced++;
+    }
+  }
+
+  // 放置宝物
+  const treasureTypes = ['treasure', 'gem', 'acorn', 'fish', 'bone'];
+  let treasuresPlaced = 0;
+  while (treasuresPlaced < treasureCount) {
+    const r = Math.floor(Math.random() * size);
+    const c = Math.floor(Math.random() * size);
+    if (exploreGrid[r][c].type === 'empty') {
+      exploreGrid[r][c].type = treasureTypes[treasuresPlaced % treasureTypes.length];
+      treasuresPlaced++;
+    }
+  }
+
+  // 计算数字提示
+  calculateExploreNumbers();
 }
 
-function getDistanceToTreasure(row, col) {
-  if (exploreTreasures.length === 0) return 99;
-  return Math.min(...exploreTreasures.map(t =>
-    Math.abs(t.row - row) + Math.abs(t.col - col)
-  ));
+function canPlaceTrap(r, c, size) {
+  const cell = exploreGrid[r][c];
+  if (cell.type !== 'empty') return false;
+
+  // 不能放在入口或出口附近
+  const distToStart = Math.abs(r - exploreStartPos.row) + Math.abs(c - exploreStartPos.col);
+  const distToExit = Math.abs(r - exploreExitPos.row) + Math.abs(c - exploreExitPos.col);
+  if (distToStart <= 1 || distToExit <= 1) return false;
+
+  return true;
+}
+
+function calculateExploreNumbers() {
+  const size = exploreGrid.length;
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (exploreGrid[r][c].type !== 'trap') {
+        exploreGrid[r][c].adjacentTraps = countAdjacentTraps(r, c);
+      }
+    }
+  }
+}
+
+function countAdjacentTraps(row, col) {
+  const size = exploreGrid.length;
+  let count = 0;
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = row + dr, nc = col + dc;
+      if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+        if (exploreGrid[nr][nc].type === 'trap') count++;
+      }
+    }
+  }
+  return count;
+}
+
+function isExploreSolvable() {
+  // 使用 BFS 检查是否存在从入口到出口的安全路径
+  const size = exploreGrid.length;
+  const visited = new Set();
+  const queue = [[exploreStartPos.row, exploreStartPos.col]];
+
+  while (queue.length > 0) {
+    const [r, c] = queue.shift();
+    const key = `${r},${c}`;
+    if (visited.has(key)) continue;
+    visited.add(key);
+
+    const cell = exploreGrid[r][c];
+    if (cell.type === 'trap' || cell.type === 'obstacle') continue;
+    if (r === exploreExitPos.row && c === exploreExitPos.col) return true;
+
+    // 四方向移动
+    for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+        queue.push([nr, nc]);
+      }
+    }
+  }
+  return false;
 }
 
 function renderExploreGame() {
   const area = document.getElementById('gameArea');
+  const size = exploreGrid.length;
+  const cellSize = Math.min(50, 280 / size);
+
+  // 生成生命显示
+  const livesDisplay = '❤️'.repeat(exploreLives) + '🖤'.repeat(exploreMaxLives - exploreLives);
 
   area.innerHTML = `
     <div class="game-header">
-      <div class="game-title">🗺️ 森林探索</div>
-      <div class="game-timer">🐾 ×${explorePaws}</div>
+      <div class="game-title">🗺️ 第${exploreLevel}层</div>
+      <div class="game-stats">
+        <span class="lives">${livesDisplay}</span>
+        <span class="coins">💰${exploreCoins}</span>
+        <span class="gems">💎${exploreGems}</span>
+      </div>
     </div>
     <div class="game-content">
       <div class="explore-description">
-        <div class="characters">${CHARACTERS.cat.icon} ${CHARACTERS.dog.icon}</div>
-        <div class="text">在森林中寻找隐藏的宝贝！挖开苔藓看看下面有什么</div>
+        <div class="text">从 🐱 走到 🚪，避开 💀 陷阱！数字 = 周围陷阱数</div>
       </div>
-      <div class="explore-grid">
+      <div class="explore-grid" style="grid-template-columns: repeat(${size}, ${cellSize}px);">
         ${exploreGrid.map((row, r) => row.map((cell, c) => {
-          const dist = getDistanceToTreasure(r, c);
-          let hintClass = '';
-          if (exploreHeatmapActive && !cell.revealed) {
-            if (dist === 0) hintClass = 'hint-fire';
-            else if (dist === 1) hintClass = 'hint-hot';
-            else if (dist <= 2) hintClass = 'hint-warm';
-            else hintClass = 'hint-cold';
+          const typeInfo = EXPLORE_CELL_TYPES[cell.type];
+          let content = '';
+          let cellClass = 'explore-cell';
+
+          if (cell.revealed) {
+            cellClass += ' revealed';
+            if (cell.type === 'trap') {
+              content = '💀';
+              cellClass += ' trap';
+            } else if (cell.type === 'exit') {
+              content = '🚪';
+              cellClass += ' exit';
+            } else if (cell.type === 'start') {
+              content = '🐱';
+              cellClass += ' start';
+            } else if (typeInfo.icon) {
+              content = typeInfo.icon;
+              cellClass += ' treasure';
+            } else if (cell.adjacentTraps > 0) {
+              content = cell.adjacentTraps;
+              cellClass += ' number-' + cell.adjacentTraps;
+            }
+          } else {
+            content = cell.flagged ? '🚩' : '🌿';
+            cellClass += cell.flagged ? ' flagged' : ' hidden';
           }
-          const isTreasure = cell.content === 'treasure' && cell.revealed;
-          const contentInfo = EXPLORE_CONTENTS[cell.content];
+
           return `
-            <div class="explore-cell ${cell.revealed ? 'revealed' : ''} ${isTreasure ? 'treasure' : ''} ${hintClass}"
-                 data-row="${r}" data-col="${c}" onclick="digExploreCell(${r}, ${c})">
-              ${cell.revealed ? contentInfo.icon : ''}
-              ${cell.revealed && cell.content !== 'empty' && cell.content !== 'trap' && !isTreasure ?
-                `<span class="hint-number">${dist}</span>` : ''}
+            <div class="${cellClass}" style="width:${cellSize}px;height:${cellSize}px;"
+                 data-row="${r}" data-col="${c}"
+                 onclick="clickExploreCell(${r}, ${c})"
+                 oncontextmenu="flagExploreCell(${r}, ${c}); return false;">
+              ${content}
             </div>
           `;
         }).join('')).join('')}
       </div>
-      <div class="explore-info">
-        <div class="item" id="explore-coins">💰 ${exploreRewards.coins}</div>
-        <div class="item" id="explore-gems">💎 ${exploreRewards.gems}</div>
-      </div>
-      <div class="explore-abilities">
-        <button class="ability-btn" onclick="useExploreAbility('cat')" ${!exploreAbilities.cat ? 'disabled' : ''}>
-          <span class="icon">🐱</span>感应🐟
+      <div class="explore-toolbar">
+        <button class="tool-btn ${exploreFlagMode ? 'active' : ''}" onclick="toggleFlagMode()">
+          🚩 标记模式
         </button>
-        <button class="ability-btn" onclick="useExploreAbility('dog')" ${!exploreAbilities.dog ? 'disabled' : ''}>
-          <span class="icon">🐶</span>感应🦴
+        <button class="tool-btn" onclick="useExploreMap()" ${exploreItems.maps <= 0 ? 'disabled' : ''}>
+          🗺️ ×${exploreItems.maps}
         </button>
-        <button class="ability-btn" onclick="toggleExploreHeatmap()">
-          ${exploreHeatmapActive ? '🔥 关闭热力图' : '💡 热力图'}
+        <button class="tool-btn" onclick="useExplorePick()" ${exploreItems.picks <= 0 ? 'disabled' : ''}>
+          ⛏️ ×${exploreItems.picks}
         </button>
       </div>
     </div>
   `;
 }
 
-function digExploreCell(row, col) {
-  if (gameState !== 'playing') return;
-  if (explorePaws <= 0) return;
-  if (exploreGrid[row][col].revealed) return;
+function clickExploreCell(row, col) {
+  if (exploreGameStatus !== 'playing') return;
 
-  const cell = document.querySelector(`.explore-cell[data-row="${row}"][data-col="${col}"]`);
-  if (cell) {
-    cell.classList.add('digging');
-    createDirtParticles(cell);
+  const cell = exploreGrid[row][col];
+  if (cell.revealed) return;
+
+  if (exploreFlagMode) {
+    flagExploreCell(row, col);
+    return;
   }
 
-  explorePaws--;
-  exploreGrid[row][col].revealed = true;
-
-  const content = exploreGrid[row][col].content;
-  const contentInfo = EXPLORE_CONTENTS[content];
-
-  // 处理奖励
-  let rewardText = '';
-  if (contentInfo.reward) {
-    if (contentInfo.reward.coins) {
-      exploreRewards.coins += contentInfo.reward.coins;
-      rewardText = `+${contentInfo.reward.coins}💰`;
-    }
-    if (contentInfo.reward.gems) {
-      exploreRewards.gems += contentInfo.reward.gems;
-      rewardText = `+${contentInfo.reward.gems}💎`;
-    }
-    if (contentInfo.reward.paws) {
-      explorePaws += contentInfo.reward.paws;
-      rewardText = `${contentInfo.reward.paws}🐾`;
-    }
-  }
-
-  setTimeout(() => {
-    renderExploreGame();
-
-    if (rewardText && content !== 'empty') {
-      const newCell = document.querySelector(`.explore-cell[data-row="${row}"][data-col="${col}"]`);
-      if (newCell) createRewardPopup(newCell, rewardText);
-    }
-
-    // 检查结束条件
-    if (content === 'treasure') {
-      setTimeout(() => endExploreGame(true), 800);
-    } else if (explorePaws <= 0) {
-      setTimeout(() => endExploreGame(false), 500);
-    }
-  }, 300);
+  revealExploreCell(row, col);
 }
 
-function useExploreAbility(character) {
-  const targetItem = character === 'cat' ? 'fish' : 'bone';
-  exploreAbilities[character] = false;
+function revealExploreCell(row, col, usePick = false) {
+  const cell = exploreGrid[row][col];
+  if (cell.revealed || cell.flagged) return;
 
-  // 高亮相邻格子中是否有目标物品
-  const cells = document.querySelectorAll('.explore-cell:not(.revealed)');
-  cells.forEach(cell => {
-    const row = parseInt(cell.dataset.row);
-    const col = parseInt(cell.dataset.col);
+  cell.revealed = true;
+  const typeInfo = EXPLORE_CELL_TYPES[cell.type];
 
-    // 检查相邻格子
-    let hasTarget = false;
-    for (let dr = -1; dr <= 1; dr++) {
-      for (let dc = -1; dc <= 1; dc++) {
-        if (dr === 0 && dc === 0) continue;
-        const nr = row + dr;
-        const nc = col + dc;
-        if (nr >= 0 && nr < 5 && nc >= 0 && nc < 5) {
-          if (exploreGrid[nr][nc].content === targetItem && !exploreGrid[nr][nc].revealed) {
-            hasTarget = true;
+  // 动画效果
+  const cellEl = document.querySelector(`.explore-cell[data-row="${row}"][data-col="${col}"]`);
+  if (cellEl) {
+    cellEl.classList.add('revealing');
+    createDirtParticles(cellEl);
+  }
+
+  // 处理不同类型
+  if (cell.type === 'trap' && !usePick) {
+    // 踩到陷阱
+    exploreLives--;
+    setTimeout(() => {
+      renderExploreGame();
+      shakeScreen();
+      if (exploreLives <= 0) {
+        setTimeout(() => endExploreGame(false), 500);
+      }
+    }, 300);
+  } else if (cell.type === 'exit') {
+    // 到达出口
+    setTimeout(() => {
+      renderExploreGame();
+      setTimeout(() => endExploreGame(true), 500);
+    }, 300);
+  } else {
+    // 收集奖励
+    if (typeInfo.reward) {
+      if (typeInfo.reward.coins) exploreCoins += typeInfo.reward.coins;
+      if (typeInfo.reward.gems) exploreGems += typeInfo.reward.gems;
+      setTimeout(() => {
+        renderExploreGame();
+        const newCell = document.querySelector(`.explore-cell[data-row="${row}"][data-col="${col}"]`);
+        if (newCell && typeInfo.reward.coins) {
+          createRewardPopup(newCell, `+${typeInfo.reward.coins}💰`);
+        }
+      }, 300);
+    } else {
+      // 空格子，如果数字为0则自动展开周围
+      if (cell.adjacentTraps === 0 && cell.type === 'empty') {
+        setTimeout(() => {
+          autoRevealAround(row, col);
+          renderExploreGame();
+        }, 100);
+      } else {
+        setTimeout(() => renderExploreGame(), 300);
+      }
+    }
+  }
+}
+
+function autoRevealAround(row, col) {
+  const size = exploreGrid.length;
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = row + dr, nc = col + dc;
+      if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+        const neighbor = exploreGrid[nr][nc];
+        if (!neighbor.revealed && neighbor.type !== 'trap') {
+          neighbor.revealed = true;
+          if (neighbor.adjacentTraps === 0 && neighbor.type === 'empty') {
+            autoRevealAround(nr, nc);
           }
         }
       }
     }
+  }
+}
 
-    if (hasTarget) {
-      cell.style.boxShadow = 'inset 0 0 20px rgba(255,215,0,0.8)';
-      setTimeout(() => cell.style.boxShadow = '', 2000);
+function flagExploreCell(row, col) {
+  const cell = exploreGrid[row][col];
+  if (cell.revealed) return;
+  cell.flagged = !cell.flagged;
+  renderExploreGame();
+}
+
+function toggleFlagMode() {
+  exploreFlagMode = !exploreFlagMode;
+  renderExploreGame();
+}
+
+function useExploreMap() {
+  if (exploreItems.maps <= 0) return;
+  exploreItems.maps--;
+
+  // 揭示一个3x3区域（安全的）
+  const size = exploreGrid.length;
+  let bestSpot = null;
+  let maxHidden = 0;
+
+  // 找到隐藏格子最多的3x3区域
+  for (let r = 0; r < size - 2; r++) {
+    for (let c = 0; c < size - 2; c++) {
+      let hidden = 0;
+      for (let dr = 0; dr < 3; dr++) {
+        for (let dc = 0; dc < 3; dc++) {
+          if (!exploreGrid[r + dr][c + dc].revealed) hidden++;
+        }
+      }
+      if (hidden > maxHidden) {
+        maxHidden = hidden;
+        bestSpot = { row: r, col: c };
+      }
     }
-  });
+  }
+
+  if (bestSpot) {
+    for (let dr = 0; dr < 3; dr++) {
+      for (let dc = 0; dc < 3; dc++) {
+        const cell = exploreGrid[bestSpot.row + dr][bestSpot.col + dc];
+        if (!cell.revealed && cell.type !== 'trap') {
+          cell.revealed = true;
+        }
+      }
+    }
+  }
 
   renderExploreGame();
 }
 
-function toggleExploreHeatmap() {
-  exploreHeatmapActive = !exploreHeatmapActive;
-  renderExploreGame();
+function useExplorePick() {
+  if (exploreItems.picks <= 0) return;
+  // 激活镐子模式，下次点击安全挖掘
+  alert('点击任意格子安全挖掘（不会触发陷阱）');
+  exploreItems.picks--;
+
+  // 临时覆盖点击事件
+  window.pickModeActive = true;
+  const originalClick = window.clickExploreCell;
+  window.clickExploreCell = (row, col) => {
+    if (window.pickModeActive) {
+      window.pickModeActive = false;
+      revealExploreCell(row, col, true); // usePick = true
+    } else {
+      originalClick(row, col);
+    }
+  };
+}
+
+function shakeScreen() {
+  const container = document.querySelector('.minigame-container');
+  if (container) {
+    container.classList.add('shake');
+    setTimeout(() => container.classList.remove('shake'), 500);
+  }
 }
 
 function createDirtParticles(cell) {
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 6; i++) {
     const particle = document.createElement('div');
     particle.className = 'dirt-particle';
-    const angle = (Math.PI * 2 / 8) * i + (Math.random() - 0.5) * 0.5;
-    const distance = 15 + Math.random() * 15;
+    const angle = (Math.PI * 2 / 6) * i + (Math.random() - 0.5) * 0.5;
+    const distance = 10 + Math.random() * 10;
     particle.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
-    particle.style.setProperty('--dy', `${Math.sin(angle) * distance - 10}px`);
+    particle.style.setProperty('--dy', `${Math.sin(angle) * distance - 8}px`);
     particle.style.left = '50%';
     particle.style.top = '50%';
     particle.style.background = ['#228B22', '#1a6b1a', '#2a9b2a'][Math.floor(Math.random() * 3)];
     cell.appendChild(particle);
-    setTimeout(() => particle.remove(), 600);
+    setTimeout(() => particle.remove(), 500);
   }
 }
 
@@ -1309,13 +1636,114 @@ function createRewardPopup(cell, text) {
   setTimeout(() => popup.remove(), 1000);
 }
 
-function endExploreGame(foundTreasure) {
-  gameState = 'complete';
-  const rewards = {
-    coins: exploreRewards.coins + (foundTreasure ? 50 : 0),
-    gems: exploreRewards.gems,
-  };
-  showResult(foundTreasure, rewards);
+function endExploreGame(reachedExit) {
+  if (reachedExit) {
+    // 通关
+    exploreLevel++;
+    exploreLives = exploreMaxLives; // 恢复生命
+
+    // 每5关进入商店
+    if (exploreLevel % 5 === 1 && exploreLevel > 1) {
+      exploreGameStatus = 'shopping';
+      showExploreShop();
+    } else {
+      // 继续下一关
+      showExploreResult(true);
+    }
+  } else {
+    // 游戏结束
+    exploreGameStatus = 'lost';
+    showExploreResult(false);
+  }
+}
+
+function showExploreResult(success) {
+  const modal = document.getElementById('resultModal');
+  const content = modal.querySelector('.result-content');
+
+  content.innerHTML = `
+    <div class="result-icon">${success ? '🎉' : '😢'}</div>
+    <div class="result-title">${success ? `第${exploreLevel - 1}层通过!` : '探索结束'}</div>
+    <div class="result-rewards">
+      <div class="reward-item">
+        <span class="reward-value">${exploreCoins}</span>
+        <span class="reward-label">金币</span>
+      </div>
+      <div class="reward-item">
+        <span class="reward-value">${exploreGems}</span>
+        <span class="reward-label">宝石</span>
+      </div>
+      <div class="reward-item">
+        <span class="reward-value">第${success ? exploreLevel : exploreLevel}层</span>
+        <span class="reward-label">${success ? '下一层' : '最高层'}</span>
+      </div>
+    </div>
+    <button class="result-btn" onclick="continueExplore(${success})">${success ? '继续探索' : '重新开始'}</button>
+  `;
+
+  modal.classList.add('show');
+}
+
+function showExploreShop() {
+  const modal = document.getElementById('resultModal');
+  const content = modal.querySelector('.result-content');
+
+  content.innerHTML = `
+    <div class="result-icon">🏪</div>
+    <div class="result-title">森林商店</div>
+    <div class="shop-items">
+      <div class="shop-item" onclick="buyExploreItem('map')">
+        <span class="item-icon">🗺️</span>
+        <span class="item-name">地图</span>
+        <span class="item-price">50💰</span>
+      </div>
+      <div class="shop-item" onclick="buyExploreItem('pick')">
+        <span class="item-icon">⛏️</span>
+        <span class="item-name">镐子</span>
+        <span class="item-price">80💰</span>
+      </div>
+      <div class="shop-item" onclick="buyExploreItem('life')">
+        <span class="item-icon">❤️</span>
+        <span class="item-name">生命+1</span>
+        <span class="item-price">150💰</span>
+      </div>
+    </div>
+    <div class="shop-balance">余额: 💰${exploreCoins}</div>
+    <button class="result-btn" onclick="continueExplore(true)">继续探索</button>
+  `;
+
+  modal.classList.add('show');
+}
+
+function buyExploreItem(item) {
+  const prices = { map: 50, pick: 80, life: 150 };
+  const price = prices[item];
+
+  if (exploreCoins < price) {
+    alert('金币不足！');
+    return;
+  }
+
+  exploreCoins -= price;
+  if (item === 'map') exploreItems.maps++;
+  else if (item === 'pick') exploreItems.picks++;
+  else if (item === 'life') exploreMaxLives++;
+
+  showExploreShop(); // 刷新商店显示
+}
+
+function continueExplore(success) {
+  const modal = document.getElementById('resultModal');
+  modal.classList.remove('show');
+
+  if (success) {
+    initExploreGame();
+    renderExploreGame();
+  } else {
+    exploreGameStatus = 'idle';
+    gameState = 'idle';
+    renderGameArea();
+  }
 }
 
 // ============================================
@@ -1350,7 +1778,7 @@ function renderGameArea() {
       case 'explore':
         icon = '🗺️';
         title = '森林探索';
-        desc = '在森林草地中挖掘寻找隐藏的宝物！用爪子挖开苔藓';
+        desc = '扫雷式冒险！从入口走到出口，用数字推理避开陷阱';
         break;
     }
 
