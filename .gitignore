@@ -42,3 +42,12 @@ dist/
 # Test projects
 NewProject/
 NewProject_1/
+
+# Demo screenshots (regenerable)
+demo/screenshot-*.png
+demo/screenshot.mjs
+demo/review-all.mjs
+demo/review-screenshots/
+
+# Editor cache
+.creator/
