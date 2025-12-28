@@ -42,13 +42,13 @@
 - [x] 6.1 测试可解性算法 → verified with Playwright
 - [x] 6.2 测试关卡平衡 → level 1-2 tested
 - [x] 6.3 修复 bug → fixed template literal escaping issue
-- [x] 6.4 提交代码 → pending
+- [x] 6.4 提交代码 → commit 06e501e
 
 ---
 
 ## Progress
 
 - Total: 24 tasks
-- Completed: 23
+- Completed: 24
 - Skipped: 1 (debug mode)
 - Remaining: 0
